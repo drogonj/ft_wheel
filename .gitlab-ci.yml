@@ -1,9 +1,0 @@
-stud:
-  script:
-    - cd /opt/ft_wheel
-    - git pull
-    - bash docker_secrets.sh
-    - docker-compose down --rmi all -v
-    - docker-compose up -d --build
-  tags:
-    - stud
