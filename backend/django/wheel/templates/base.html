@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Lucky Wheel{% endblock %}</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin:20px; background:#111; color:#eee; }
+    a { color:#4dabf7; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    h1,h2,h3 { font-weight:600; }
+    .container { max-width:1200px; margin:0 auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

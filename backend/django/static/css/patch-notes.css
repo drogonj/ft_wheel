@@ -1,0 +1,177 @@
+/* Patch Notes Popup Styles - Utilisant le design existant */
+.patch-notes-popup {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.patch-notes-popup.show {
+    display: flex;
+    opacity: 1;
+}
+
+.patch-notes-content {
+    background: linear-gradient(135deg, #242545 0%, #1e2152 100%);
+    width: min(60vh, 50vw);
+    max-width: 600px;
+    border-radius: 1rem;
+    box-shadow: 0 0.9375rem 3.125rem rgba(0, 0, 0, 0.5);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.patch-notes-header {
+    background: linear-gradient(145deg, #4776E6, #8E54E9);
+    color: white;
+    padding: 4%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.patch-notes-header h2 {
+    margin: 0;
+    font-size: min(2.5vh, 4.5vw);
+    text-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+    flex: 1;
+}
+
+.patch-notes-version {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-size: min(1.5vh, 3vw);
+    font-weight: 600;
+    margin: 0 1rem;
+}
+
+.patch-notes-close {
+    font-size: min(2.5vh, 4.5vw);
+    cursor: pointer;
+    opacity: 0.8;
+    transition: transform 0.2s, opacity 0.2s;
+    line-height: 1;
+}
+
+.patch-notes-close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.patch-notes-body {
+    padding: 5%;
+    color: white;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.patch-notes-date {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: min(1.8vh, 3.5vw);
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+}
+
+.patch-notes-list h3 {
+    color: white;
+    font-size: min(2vh, 4vw);
+    margin: 0 0 1rem 0;
+    font-weight: 600;
+}
+
+.patch-notes-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.patch-notes-list li {
+    padding: 0.5rem 0;
+    padding-left: 2rem;
+    position: relative;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.5;
+    font-size: min(1.8vh, 3.5vw);
+}
+
+.patch-notes-list li::before {
+    content: "✨";
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    font-size: min(1.5vh, 3vw);
+}
+
+.patch-notes-footer {
+    padding: min(2.5vh, 5.25vw);
+    text-align: center;
+    border-top: 0.0625rem solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
+}
+
+.patch-notes-btn {
+    background: linear-gradient(145deg, #FFD700, #FFA500);
+    border: none;
+    padding: min(1vh, 3vw) min(2vh, 4vw);
+    border-radius: 3.125rem;
+    color: #333;
+    font-weight: bold;
+    font-size: min(1.8vh, 3.5vw);
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 0.3125rem 0.9375rem rgba(0, 0, 0, 0.2);
+}
+
+.patch-notes-btn:hover {
+    transform: translateY(-0.1875rem);
+    box-shadow: 0 0.5rem 1.5625rem rgba(0, 0, 0, 0.3);
+}
+
+.patch-notes-btn:active {
+    transform: translateY(0.125rem);
+    box-shadow: 0 0.1875rem 0.625rem rgba(0, 0, 0, 0.1);
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Responsive pour mobile */
+@media (max-width: 768px) {
+    .patch-notes-content {
+        width: 95vw;
+        max-height: 90vh;
+    }
+    
+    .patch-notes-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .patch-notes-version {
+        margin: 0;
+    }
+    
+    .patch-notes-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+    
+    .patch-notes-list li {
+        padding-left: 1.5rem;
+    }
+}

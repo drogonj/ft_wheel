@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+{% load static %}
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="shortcut icon" type="image/png" href="{% static 'images/42.svg' %}">
+        <link rel="stylesheet" href="{% static 'css/global.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/wheel.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/popup.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/menu.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/logout.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/patch-notes.css' %}" />
+        <title>ft_wheel</title>
+
+        <script>
+            const sectors = {{ jackpots|safe }};
+        </script>
+    </head>
+    <body>
+
+        {% include 'wheel/menu.html' %}
+
+        <p id="counter"></p>
+        <div id="spin_the_wheel">
+            <canvas id="wheel" width="800" height="800"></canvas>
+            <div id="arrow"></div>
+            <div id="spin">SPIN</div>
+        </div>
+        <div id="win-popup" class="popup-container">
+            <div class="popup">
+                <div class="popup-header">
+                    <h2>Félicitations !</h2>
+                    <span class="close-popup">&times;</span>
+                </div>
+                <div class="popup-content">
+                    <div class="win-animation">🎉</div>
+                    <p id="win-message"></p>
+                </div>
+                <div class="popup-footer">
+                    <button id="claim-prize">Continuer</button>
+                </div>
+            </div>
+        </div>
+        
+        <script type="module" src="{% static 'js/counter.js' %}"></script>
+        <script type="module" src="{% static 'js/wheel.js' %}"></script>
+        <script type="module" src="{% static 'js/patch-notes.js' %}"></script>
+    </body>
+</html>

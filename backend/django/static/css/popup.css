@@ -1,0 +1,150 @@
+.popup-container {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+}
+
+.popup {
+    background: linear-gradient(135deg, #242545 0%, #1e2152 100%);
+    width: min(50vh, 45vw);
+    border-radius: 1rem;
+    box-shadow: 0 0.9375rem 3.125rem rgba(0, 0, 0, 0.5);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    animation: scaleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.popup-header {
+    background: linear-gradient(145deg, #4776E6, #8E54E9);
+    color: white;   
+    padding: 4%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popup-header h2 {
+    margin: 0;
+    font-size: min(2vh, 4vw);
+    text-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
+}
+
+.close-popup {
+    font-size: min(2vh, 4vw);
+    cursor: pointer;
+    opacity: 0.8;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.close-popup:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.popup-content {
+    padding: 5%;
+    text-align: center;
+    color: white;
+}
+
+.win-animation {
+    font-size: min(5vh, 7vw);
+    padding: min(1.5vh, 1vw) 0 0 0;
+    animation: popupBounce 1s infinite alternate;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.popup-content p {
+    font-size: min(2vh, 4vw);
+    margin: 0.9375rem 0;
+    line-height: 1.5;
+}
+
+.popup-footer {
+    padding: min(2.5vh, 5.25vw);
+    text-align: center;
+    border-top: 0.0625rem solid rgba(255, 255, 255, 0.05);
+}
+
+#claim-prize {
+    background: linear-gradient(145deg, #FFD700, #FFA500);
+    border: none;
+    padding: min(1vh, 3vw) min(2vh, 4vw);
+    border-radius: 3.125rem;
+    color: #333;
+    font-weight: bold;
+    font-size: min(1.5vh, 3.5vw);
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 0.3125rem 0.9375rem rgba(0, 0, 0, 0.2);
+    bottom: 0;
+}
+
+#claim-prize:hover {
+    transform: translateY(-0.1875rem);
+    box-shadow: 0 0.5rem 1.5625rem rgba(0, 0, 0, 0.3);
+}
+
+#claim-prize:active {
+    transform: translateY(0.125rem);
+    box-shadow: 0 0.1875rem 0.625rem rgba(0, 0, 0, 0.1);
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes popupBounce {
+    to { transform: translateY(-0.625rem); }
+}
+
+.consent {
+    min-width: 300px;
+    height: auto;
+}
+
+.consent h1 {
+    font-size: min(4vh, 7vw);
+}
+
+.consent p {
+    font-size: min(2vh, 5vw);
+}
+
+.consent-form {
+    display: flex;
+    justify-content: center;
+}
+
+
+
+.consent-button {
+  align-items: center;
+  background-image: linear-gradient(144deg, #af40ff, #5b42f3 50%, #00ddeb);
+  border: 0;
+  border-radius: 80px;
+  box-shadow: rgba(151, 65, 252, 0.2) 0 15px 30px -5px;
+  box-sizing: border-box;
+  color: #ffffff;
+  display: flex;
+  font-size: min(2vh, 5vw);
+  justify-content: center;
+  line-height: 1em;
+  max-width: 100%;
+  min-width: 40%;
+  padding: 3%;
+  text-decoration: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.3s;
+}

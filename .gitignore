@@ -1,0 +1,5 @@
+.vagrant
+__pycache__
+.vscode
+.env
+secrets

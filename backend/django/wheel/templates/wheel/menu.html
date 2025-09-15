@@ -1,0 +1,39 @@
+{% load static %}
+    
+    <div class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    
+    <div class="side-menu">
+        <div class="menu-content">
+            <div class="menu-section">
+                <h3 class="menu-section-title">Options de jeu</h3>
+                {% for w in WHEEL_LIST %}
+                    <div class="menu-item{% if forloop.first %} active{% endif %}" data-option="{{ w.slug }}">{{ w.title }}</div>
+                {% empty %}
+                    <div class="menu-item">Aucune roue</div>
+                {% endfor %}
+            </div>
+            <div class="menu-section">
+                <h3 class="menu-section-title">Historique</h3>
+                <a class="menu-item" data-option="history" href="/history">Voir les gains 📈</a>
+            </div>
+        </div>
+    </div>
+    
+    <a id="logout" href="/logout">logout</a>
+    <a id="faq" href="/faq">FAQ</a>
+
+    <script>
+      // Embed wheel metadata as JSON directly (escaped)
+      window.WHEEL_META = JSON.parse("{{ WHEEL_LIST|escapejs }}");
+      window.AVAILABLE_WHEELS = Array.isArray(window.WHEEL_META) ? window.WHEEL_META.map(w => w.slug) : [];
+      window.WHEEL_TITLE_MAP = Object.fromEntries(window.AVAILABLE_WHEELS.map(slug => {
+        const found = window.WHEEL_META.find(w => w.slug === slug) || {title: slug};
+        return [slug, found.title];
+      }));
+    </script>
+    <script type="module" src="{% static 'js/menu.js' %}"></script>
+    <script type="module" src="{% static 'js/utils.js' %}"></script>

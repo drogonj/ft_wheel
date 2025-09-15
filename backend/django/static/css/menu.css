@@ -1,0 +1,202 @@
+.side-menu {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 0;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    overflow-x: hidden;
+    transition: width 0.3s ease-in-out;
+    z-index: 996;
+    box-shadow: 0.3125rem 0 1.25rem rgba(0, 0, 0, 0.3);
+    border-right: 0.0625rem solid rgba(255, 255, 255, 0.1);
+}
+
+.side-menu.open {
+    width: max(25vh, 15vw);
+}
+
+.menu-toggle {
+    position: absolute;
+    top: 1.5%;
+    left: 3%;
+    z-index: 998;
+    cursor: pointer;
+    background: linear-gradient(145deg, #4776E6, #8E54E9);
+    width: max(2.5vw, 3.75vh);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    border: 0.0625rem solid rgba(255, 255, 255, 0.1);
+}
+
+.menu-toggle:hover {
+    transform: scale(1.05);
+}
+
+.menu-toggle span {
+    display: block;
+    width: max(2vh, 1vw);
+    height: max(0.2vh, 0.1vw);
+    background-color: white;
+    margin: max(0.3vh, 0.15vw) 0;
+    border-radius: 3px;
+    transition: all 0.3s ease-in-out;
+}
+
+.menu-toggle.open span:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.menu-toggle.open span:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-toggle.open span:nth-child(3) {
+    transform: rotate(-45deg) translate(5px, -5px);
+}
+
+.menu-content {
+    padding: 125px 15px 20px;
+    color: white;
+}
+
+.menu-section {
+    margin-bottom: 30px;
+}
+
+.menu-section-title {
+    width: max(20vh, 13vw);
+    font-size: max(1.75vh, 1.25vw);
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+    text-shadow: 0 0 10px rgba(77, 213, 255, 0.4);
+}
+
+.menu-item {
+    width: max(22vh, 13.5vw);
+    padding: 5% 5%;
+    margin: 1vh 0;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-decoration:none;
+    font-size: max(1.5vh, 1vw);
+    color: white;
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.menu-item.active {
+    background: linear-gradient(145deg, #4776E6, #8E54E9);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.mode-notification {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: linear-gradient(145deg, #4776E6, #8E54E9);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: max(1.5vh, 1vw);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 1002;
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.mode-notification.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1500;
+    color: white;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #4776E6;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 15px;
+}
+
+.loading-text {
+    font-size: max(2vh, 1.5vw);
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+#faq {
+    position: absolute;
+    bottom: 1.5%;
+    align-self: center;
+    color: white;
+    font-size: max(1.25vh, 0.75vw);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Animation pour le menu */
+@keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.side-menu.open .menu-content {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@media (max-width: 850px) {
+    .menu-toggle {
+        top: auto;
+        bottom: 10%;
+        left: 3%;
+    }
+    #faq {
+        top: auto;
+        bottom: 10%;
+    }
+}

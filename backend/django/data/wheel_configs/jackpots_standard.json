@@ -1,0 +1,75 @@
+{
+    "url": "standard",
+    "title": "Standard Mode ⚖️",
+    "jackpots": {
+        "Crêpe 🥞": {
+            "text": "Crêpe 🥞",
+            "color": "#179299",
+            "number": 1,
+            "message": "Tu as gagné une crêpe ! Tu peux la récupérer auprès du BDE, le lundi/vendredi en cantina !",
+            "api_route": {
+                "route": "/notify"
+            }
+        },
+        "+10Pts": {
+            "text": "+10Pts",
+            "color": "#a6d189",
+            "number": 2,
+            "message": "10 points de coalitions, bravo !",
+            "api_route": {
+                "route": "/coalition",
+                "value": 10
+            }
+        },
+        "+5Pts": {
+            "text": "+5Pts",
+            "color": "#a6d189",
+            "number": 2,
+            "message": "5 points de coalitions, c'est toujours ça de pris !",
+            "api_route": {
+                "route": "/coalition",
+                "value": 5
+            }
+            
+        },
+        "-10Pts": {
+            "text": "-10Pts",
+            "color": "#ed8796",
+            "number": 3,
+            "message": "-10 points de coalitions, pas de chance cette fois !",
+            "api_route": {
+                "route": "/coalition",
+                "value": -10
+            }
+        },
+        "-5Pts": {
+            "text": "-5Pts",
+            "color": "#e64553",
+            "number": 1,
+            "message": "-5 points de coalitions, aïe...",
+            "api_route": {
+                "route": "/coalition",
+                "value": -5
+            }
+        },
+        "5 Wallet": {
+            "text": "5 Wallet",
+            "color": "#df8e1d",
+            "number": 1,
+            "message": "5 Wallet ! Tu peux désormais t'acheter une TIG dans le shop !",
+            "api_route": {
+                "route": "/wallet",
+                "value": 5
+            }
+        },
+        "Un truc..?": {
+            "text": "Un quoi ?",
+            "color": "#179299",
+            "number": 1,
+            "message": "Demande à un membre du BDE de te donner... un truc ?",
+            "api_route": {
+                "route": "/notify"
+            }
+        }
+    }
+}

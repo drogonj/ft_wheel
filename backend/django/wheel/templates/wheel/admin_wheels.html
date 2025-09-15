@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Admin Wheels{% endblock %}
+{% block content %}
+<h1>Wheel Management</h1>
+<link rel="stylesheet" href="{% static 'css/admin_wheels.css' %}">
+
+<div class="flex" style="margin-bottom:16px;">
+  <div>
+    <label for="wheel-select">Wheel:</label>
+    <select id="wheel-select"></select>
+  </div>
+  <div class="flex">
+  <input id="new-wheel-url" placeholder="url (e.g. standard)" />
+  <input id="new-wheel-title" placeholder="title (e.g. Standard Mode ⚖️)" />
+  <button id="create-wheel" class="primary">Create</button>
+  <div class="flex" style="margin-top:8px;">
+    <input id="edit-wheel-url" placeholder="url" />
+    <input id="edit-wheel-title" placeholder="title" />
+    <button id="update-wheel-meta">Update Meta</button>
+  </div>
+    <button id="delete-wheel" class="danger">Delete</button>
+  </div>
+  <div class="flex">
+    <button id="add-sector">Add sector</button>
+    <button id="save-sectors" class="primary">Save</button>
+    <button id="download-wheel" type="button">Get json file</button>
+    <span id="status" class="small"></span>
+  </div>
+</div>
+
+<table id="sectors-table">
+  <thead>
+    <tr>
+      <th class="drag-col" title="Drag to reorder">⇅</th>
+      <th>#</th>
+      <th>Label</th>
+      <th>Text</th>
+      <th>Color</th>
+      <th>Message</th>
+      <th>API Route</th>
+      <th>API Value</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<template id="row-template">
+  <tr>
+    <td class="drag-handle" title="Drag">⋮⋮</td>
+    <td class="idx"></td>
+    <td><input class="label-input" /></td>
+    <td><input class="text-input" /></td>
+    <td><input class="color-input" placeholder="#hex"/></td>
+    <td><input class="message-input" /></td>
+    <td><input class="api-route" placeholder="/wallet" /></td>
+    <td><input class="api-value" placeholder="value" /></td>
+    <td class="row-actions">
+      <button class="dup" title="Duplicate">⧉</button>
+      <button class="del danger" title="Delete">X</button>
+    </td>
+  </tr>
+</template>
+
+<script src="{% static 'js/admin_wheels.js' %}"></script>
+{% endblock %}

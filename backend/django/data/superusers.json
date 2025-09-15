@@ -1,0 +1,10 @@
+{
+     "superusers" : {
+        "bchevall" : {
+            "testmode": true
+        },
+       "ngalzand" : {
+            "testmode": true
+       }
+     }
+}

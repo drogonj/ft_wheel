@@ -1,0 +1,103 @@
+body {
+    background:#111;
+}
+
+select, input, button {
+    background:#222;
+    color:#eee;
+    border:1px solid #444;
+    border-radius:4px;
+ padding:6px 8px;
+}
+
+button {
+    cursor:pointer;
+}
+
+button.primary {
+    background:#2b7afa;
+    border-color:#2b7afa;
+}
+
+button.danger {
+    background:#c92a2a;
+    border-color:#c92a2a;
+}
+
+table {
+    border-collapse:collapse;
+    width:100%;
+    margin-top:14px;
+}
+
+th, td {
+    border:1px solid #333;
+    padding:6px 8px;
+    font-size:14px;
+}
+
+th {
+    background:#222;
+}
+
+tr.dragging {
+    opacity:0.4;
+    background:#333 !important;
+}
+tr:hover {
+    background:#222;
+}
+.flex {
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+.row-actions button {
+    margin-right:6px;
+}
+.small {
+    font-size:12px;
+    opacity:0.7;
+}
+.pill {
+    padding:2px 6px;
+    border-radius:4px;
+    font-size:11px;
+    background:#222;
+    border:1px solid #444;
+}
+.api-route {
+    width:140px;
+    font-family:monospace;
+}
+.color-input {
+    width:100px;
+}
+.text-input {
+    width:150px;
+}
+.label-input {
+    width:100px;
+}
+td input {
+    width:100%;
+    box-sizing:border-box;
+}
+#sectors-table tbody td {
+    vertical-align:middle;
+    text-align:center;
+}
+.drag-col {
+    width:32px;
+    text-align:center;
+}
+.drag-handle {
+    cursor:grab;
+    user-select:none;
+    text-align:center;
+    width:32px;
+}
+.drag-handle:active {
+    cursor:grabbing;
+}

@@ -1,0 +1,41 @@
+#logout {
+    position: absolute;
+    top: 2%;
+    right: 2%;
+    padding: max(0.75vw, 1vh) max(2vw, 3vh);
+    background: linear-gradient(145deg, #4776E6, #8E54E9);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: max(0.75vw, 1vh);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeInDownLogout 0.6s ease-out;
+    z-index: 100; /* Ajout d'un z-index pour le superposer au compteur */
+}
+
+#logout:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(71, 118, 230, 0.3);
+    background: linear-gradient(145deg, #5485FF, #9E64F9);
+}
+
+#logout:active {
+    transform: translateY(1px);
+    box-shadow: 0 4px 15px rgba(71, 118, 230, 0.2);
+}
+
+@media (max-width: 850px) {
+    #logout {
+        top: auto;
+        bottom: 10%;
+        right: 3%;
+    }
+}

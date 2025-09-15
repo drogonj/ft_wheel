@@ -1,0 +1,71 @@
+services:
+  backend:
+    container_name: backend
+    build: backend
+    networks:
+      - ngx_network
+      - pg_network
+    environment:
+      - DEBUG=${DEBUG}
+      - HOSTNAME=${HOSTNAME}
+      - HTTPS=${HTTPS}
+    secrets:
+      - django_secret
+      - oauth_uid
+      - oauth_secret
+      - oauth_redirect_uri
+      - postgres_db
+      - postgres_password
+      - infra_token
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 8000:8000
+    restart: unless-stopped
+
+  postgres:
+    container_name: postgres
+    build: postgres
+    secrets:
+      - postgres_password
+      - postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - pg_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    user: postgres
+    restart: unless-stopped
+
+    
+networks:
+  ngx_network:
+    driver: bridge
+  pg_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
+secrets:
+  # Postgres
+  postgres_password:
+    file: ./secrets/postgres_password
+  postgres_db:
+    file: ./secrets/postgres_db
+  # Backend
+  django_secret:
+    file: ./secrets/django_secret
+  oauth_uid:
+    file: ./secrets/oauth_uid
+  oauth_secret:
+    file: ./secrets/oauth_secret
+  oauth_redirect_uri:
+    file: ./secrets/oauth_redirect_uri
+  infra_token:
+    file: ./secrets/infra_token
