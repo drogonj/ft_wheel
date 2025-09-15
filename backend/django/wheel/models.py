@@ -3,23 +3,12 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
-class HistoryManager(models.Manager):
-    def create(self, wheel, details, color, user):
-        history = self.model(
-            wheel=wheel,
-            details=details,
-            color=color,
-            user=user
-        )
-        history.save()
-        return history
-
 # History model
 class History(models.Model):
     id = models.AutoField(primary_key=True)
     timestamp = models.DateTimeField(auto_now_add=True)
-    wheel = models.CharField(max_length=50, default='standard')
-    details = models.TextField(max_length=250, blank=True, null=True)
+    wheel = models.CharField(max_length=50, default='standard', db_index=True)  # Add index for frequent queries
+    details = models.CharField(max_length=250, blank=True, null=True)  # CharField instead of TextField
     color = models.CharField(max_length=20, default='#FFFFFF')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='histories')
 

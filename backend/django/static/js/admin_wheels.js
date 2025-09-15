@@ -54,9 +54,22 @@ function buildRow(sector){
   });
   node.querySelector('.dup').addEventListener('click', ()=>{
     syncFromTable();
-    // Clone current sector (shallow copy), insert after
-    const cloneData = window.structuredClone ? structuredClone(sector) : JSON.parse(JSON.stringify(sector));
-    const newNode = buildRow(cloneData);
+    // Extract current values from this row's inputs, not the original sector data
+    const currentData = {
+      label: node.querySelector('.label-input').value.trim(),
+      text: node.querySelector('.text-input').value.trim(),
+      color: node.querySelector('.color-input').value.trim(),
+      message: node.querySelector('.message-input').value.trim() || null,
+      api_route: ( ()=>{
+        const route = node.querySelector('.api-route').value.trim();
+        const valRaw = node.querySelector('.api-value').value.trim();
+        if(!route) return null;
+        let value = valRaw;
+        if(/^-?\d+$/.test(valRaw)) value = parseInt(valRaw,10);
+        return { route, value };
+      })()
+    };
+    const newNode = buildRow(currentData);
     node.after(newNode);
     syncFromTable();
     reindex();

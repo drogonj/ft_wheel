@@ -11,10 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-from pythonjsonlogger import jsonlogger
 import os, sys
 
-from .utils import init_jackpots, docker_secret, load_wheels
+from .utils import docker_secret, load_wheels, build_wheel_versions
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -189,6 +188,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 604800
 
+# You can enable these for more strict CSRF in production, but it may cause issues with some setups (e.g. if behind a proxy)
 # CSRF_COOKIE_SECURE = True
 # CSRF_COOKIE_HTTPONLY = True
 # CSRF_COOKIE_SAMESITE = 'Strict'
@@ -201,9 +201,9 @@ CSRF_TRUSTED_ORIGINS = [
 X_FRAME_OPTIONS = "DENY"
 
 WHEEL_CONFIGS_DIR = os.path.join(BASE_DIR, 'data/wheel_configs')
-# Legacy structure still referenced by some logic (spin, session) -> build from dynamic wheels
-DYNAMIC_WHEELS = load_wheels(WHEEL_CONFIGS_DIR, balance=True)
-WHEEL_CONFIGS = { slug: meta['sectors'] for slug, meta in DYNAMIC_WHEELS.items() }
+# Single source of truth: WHEEL_CONFIGS contains {slug: {title, sectors, url}}
+WHEEL_CONFIGS = load_wheels(WHEEL_CONFIGS_DIR)
+WHEEL_VERSION_IDS = build_wheel_versions(WHEEL_CONFIGS)
 
 HTTPS = os.environ.get('HTTPS', 'False') == 'True'
 

@@ -14,8 +14,18 @@
         <link rel="stylesheet" href="{% static 'css/patch-notes.css' %}" />
         <title>ft_wheel</title>
 
+        {{ jackpots|json_script:"current-wheel-sectors" }}
         <script>
-            const sectors = {{ jackpots|safe }};
+            // Expose raw JSON string then parsed array
+            window._sectors_raw = document.getElementById('current-wheel-sectors').textContent;
+            try {
+                window.sectors = JSON.parse(window._sectors_raw);
+            } catch(e) {
+                console.error('Failed to parse sectors JSON', e, window._sectors_raw);
+                window.sectors = [];
+            }
+            window.CURRENT_WHEEL_SLUG = "{{ wheel_slug }}";
+            window.CURRENT_WHEEL_VERSION_ID = "{{ wheel_version_id }}";
         </script>
     </head>
     <body>

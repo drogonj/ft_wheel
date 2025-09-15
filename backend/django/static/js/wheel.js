@@ -11,6 +11,17 @@ function adjustScale() {
 window.addEventListener('resize', adjustScale);
 adjustScale();
 
+// Use global window.sectors provided by template
+let sectors = window.sectors;
+if (typeof sectors === 'string') {
+    try { sectors = JSON.parse(sectors); } catch(e) { console.error('Invalid sectors JSON string', e); sectors = []; }
+}
+if (!Array.isArray(sectors)) {
+    console.error('sectors is not an array after parse, defaulting to []');
+    sectors = [];
+}
+window.sectors = sectors; // ensure canonical
+
 // Generate random float in range min-max:
 const rand = (m, M) => Math.random() * (M - m) + m;
 // Fix negative modulo stackoverflow.com/a/71167019/383904
@@ -60,7 +71,10 @@ function playWinSound() {
 }
 
 document.addEventListener('wheelConfigChanged', (e) => {
-    
+    // If an external script updated window.sectors, rebind local sectors
+    if (Array.isArray(window.sectors)) {
+        sectors = window.sectors;
+    }
     window.tot = sectors.length;
     window.arc = TAU / tot;
     
@@ -213,8 +227,8 @@ if (!window._engineStarted) {
 
 // In your spin handler, REMOVE engine(); call
 elSpin.addEventListener("click", async () => {
-    if (spinAnimation || elSpin.classList.contains('disabled') || counter_distance > 0) return; // Already animating / disabled or counter is active
-
+    if (spinAnimation || elSpin.classList.contains('disabled')) return;
+    if (!window.USER_TEST_MODE && counter_distance > 0) return; // In test mode we ignore countdown
     try {
         const response = await fetch(`/spin/`, {
             method: 'POST',
@@ -222,9 +236,20 @@ elSpin.addEventListener("click", async () => {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCookie('csrftoken')
             },
+            body: JSON.stringify({ wheel_version_id: window.CURRENT_WHEEL_VERSION_ID })
         });
 
         if (!response.ok) {
+            if (response.status === 409) {
+                // Outdated wheel configuration
+                try {
+                    const data = await response.json();
+                    console.warn('Wheel configuration outdated. Expected version', data.expected_version);
+                } catch(e) {}
+                alert('Wheel updated by admin. Reloading page...');
+                window.location.reload();
+                return;
+            }
             console.error(`Can't spin wheel: ${response.status}`);
             elSpin.classList.remove('disabled');
             return;
@@ -232,6 +257,10 @@ elSpin.addEventListener("click", async () => {
 
         const result = await response.json();
         const targetIndex = result.result;
+        if (result.wheel_version_id && result.wheel_version_id !== window.CURRENT_WHEEL_VERSION_ID) {
+            // Sync local version id (should be same). If different just sync.
+            window.CURRENT_WHEEL_VERSION_ID = result.wheel_version_id;
+        }
         if (targetIndex >= 0 && targetIndex < sectors.length) {
             // REMOVE: engine(); // Don't call engine() here
             spin(targetIndex);

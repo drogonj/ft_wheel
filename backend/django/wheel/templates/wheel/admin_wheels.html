@@ -1,9 +1,23 @@
-{% extends 'base.html' %}
 {% load static %}
-{% block title %}Admin Wheels{% endblock %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ft_wheel - Admin Wheels</title>
+  <link rel="shortcut icon" type="image/png" href="{% static 'images/42.svg' %}">
+  <link rel="stylesheet" href="{% static 'css/admin_wheels.css' %}">
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin:20px; background:#111; color:#eee; }
+    a { color:#4dabf7; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    h1,h2,h3 { font-weight:600; }
+    .container { max-width:1200px; margin:0 auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
 <h1>Wheel Management</h1>
-<link rel="stylesheet" href="{% static 'css/admin_wheels.css' %}">
 
 <div class="flex" style="margin-bottom:16px;">
   <div>
@@ -64,4 +78,6 @@
 </template>
 
 <script src="{% static 'js/admin_wheels.js' %}"></script>
-{% endblock %}
+  </div>
+</body>
+</html>

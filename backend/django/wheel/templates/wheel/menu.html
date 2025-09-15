@@ -26,14 +26,17 @@
     <a id="logout" href="/logout">logout</a>
     <a id="faq" href="/faq">FAQ</a>
 
-    <script>
-      // Embed wheel metadata as JSON directly (escaped)
-      window.WHEEL_META = JSON.parse("{{ WHEEL_LIST|escapejs }}");
-      window.AVAILABLE_WHEELS = Array.isArray(window.WHEEL_META) ? window.WHEEL_META.map(w => w.slug) : [];
-      window.WHEEL_TITLE_MAP = Object.fromEntries(window.AVAILABLE_WHEELS.map(slug => {
-        const found = window.WHEEL_META.find(w => w.slug === slug) || {title: slug};
-        return [slug, found.title];
-      }));
-    </script>
+        {{ WHEEL_LIST|json_script:"wheel-data" }}
+        <script>
+            const raw = document.getElementById("wheel-data").textContent;
+            window.WHEEL_META = JSON.parse(raw);
+            window.AVAILABLE_WHEELS = Array.isArray(window.WHEEL_META) ? window.WHEEL_META.map(w => w.slug) : [];
+            window.WHEEL_TITLE_MAP = Object.fromEntries(
+                window.WHEEL_META.map(w => [w.slug, w.title])
+            );
+            window.WHEEL_VERSION_IDS = Object.fromEntries(window.WHEEL_META.map(w => [w.slug, w.version_id]));
+            window.USER_IS_SUPERUSER = JSON.parse("{{ USER_IS_SUPERUSER|yesno:'true,false' }}");
+            window.USER_TEST_MODE = JSON.parse("{{ USER_TEST_MODE|yesno:'true,false' }}");
+        </script>
     <script type="module" src="{% static 'js/menu.js' %}"></script>
     <script type="module" src="{% static 'js/utils.js' %}"></script>

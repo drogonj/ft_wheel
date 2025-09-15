@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_protect
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponse
 from django.utils import timezone
 from django.conf import settings
 from django.views.decorators.http import require_GET, require_POST
@@ -10,44 +10,63 @@ from datetime import timedelta
 import random, logging, json
 import os
 
-from .models import History, HistoryManager
+from .models import History
+from luckywheel.utils import load_wheels, build_wheel_versions
 from api.infra import handle_jackpots
 
 logger = logging.getLogger('backend')
-HistoryManager = History.objects
 
 @login_required
 @require_http_methods(["GET"])
 def wheel_view(request):
-    if not request.user:
-        return HttpResponseBadRequest()
-    
-    # Slug depuis URL
+    # Slug from url
     slug = request.GET.get('wheel') or request.GET.get('mode')
     wheels_store = getattr(settings, 'WHEEL_CONFIGS', {})
     if slug and slug in wheels_store:
         request.session['wheel_config_type'] = slug
+
     # fallback: keep existing else pick first available
     if 'wheel_config_type' not in request.session or request.session['wheel_config_type'] not in wheels_store:
         first = next(iter(wheels_store.keys()), None)
         if first:
             request.session['wheel_config_type'] = first
+
     config_type = request.session.get('wheel_config_type')
-    sectors = wheels_store.get(config_type, [])
+    sectors = wheels_store.get(config_type, {}).get('sectors', [])
+    # Compute (or fetch) version id
+    version_ids = getattr(settings, 'WHEEL_VERSION_IDS', {})
+    version_id = version_ids.get(config_type)
+
+    # Send only "label", "text", "color", "message" to client
+    sectors = [{k: v for k, v in sector.items() if k in ('label', 'text', 'color', 'message')} for sector in sectors]
+
     request.session['current_wheel_sectors'] = sectors
-    return render(request, 'wheel/wheel.html', {"jackpots": sectors, "wheel_slug": config_type})
+    # Pass Python list (template uses json_script)
+    return render(request, 'wheel/wheel.html', {"jackpots": sectors, "wheel_slug": config_type, 'wheel_version_id': version_id})
 
 
 @login_required
 @require_http_methods(["POST"])
 def spin_view(request):
-    if not request.user:
-        return HttpResponseBadRequest()
     if not request.user.can_spin():
         return HttpResponseForbidden();
 
     config_type = request.session.get('wheel_config_type', 'standard')
-    sectors = settings.WHEEL_CONFIGS[config_type]
+    sectors = settings.WHEEL_CONFIGS[config_type]['sectors'] if config_type in settings.WHEEL_CONFIGS else []
+    # If config not in sectors, reject like outdated version (this error should happen only if a wheel was deleted/renamed or a user beeing naughty)
+    if not sectors:
+        return JsonResponse({'error': 'outdated_wheel', 'expected_version': "unknown"}, status=409)
+    # Client provided version id? ensure still current.
+    try:
+        body = json.loads(request.body or '{}')
+    except Exception:
+        body = {}
+    client_version = body.get('wheel_version_id')
+    current_version = getattr(settings, 'WHEEL_VERSION_IDS', {}).get(config_type)
+    if not client_version:
+        return JsonResponse({'error': 'missing_wheel_version_id', 'expected_version': current_version}, status=409)
+    if current_version and client_version != current_version:
+        return JsonResponse({'error': 'outdated_wheel', 'expected_version': current_version if current_version else "unknown"}, status=409)
 
     result = random.randint(0, len(sectors)-1)
     request.user.last_spin = timezone.now()
@@ -59,7 +78,7 @@ def spin_view(request):
         if not sent_to_infra:
             details += "- ERROR"
 
-        HistoryManager.create(
+        History.objects.create(
             wheel=config_type,
             details=details,
             color=sectors[result]['color'],
@@ -69,14 +88,17 @@ def spin_view(request):
         logger.error("Unexpected error while saving history or handling jackpots: %s", e)
 
     logger.info(f"Jackpots! {request.user.login} - {config_type} - {sectors[result]}")
-    return JsonResponse({'result': result, 'sector': sectors[result]})
+
+    sector = sectors[result]
+    # Send only "label", "text", "color" and "message" to client
+    sector = {k: v for k, v in sector.items() if k in ('label', 'text', 'color', 'message')}
+
+    return JsonResponse({'result': result, 'sector': sector, 'wheel_version_id': current_version})
 
 
 @login_required
 @require_http_methods(["GET"])
 def time_to_spin_view(request):
-    if not request.user:
-        return HttpResponseBadRequest()
     return JsonResponse({'timeToSpin': str(request.user.time_to_spin())})
 
 
@@ -87,33 +109,24 @@ def change_wheel_config(request):
     try:
         data = json.loads(request.body)
         mode = data.get('mode')
-        
-        # Vérifier si le mode demandé existe
         if mode not in settings.WHEEL_CONFIGS:
-            return JsonResponse({'error': 'Configuration non disponible'}, status=400)
+            return JsonResponse({'error': 'Configuration not available'}, status=400)
         
-        # Générer les secteurs pour ce mode
-        sectors = settings.WHEEL_CONFIGS[mode]
-        
-        # Stocker le type de configuration dans la session
+        sectors = settings.WHEEL_CONFIGS[mode]['sectors']
         request.session['wheel_config_type'] = mode
         
         return JsonResponse({'sectors': sectors})
-        
     except Exception as e:
-        logger.error(f"Erreur lors du changement de configuration: {e}")
+        logger.error(f"Error while changing wheel configuration: {e}")
         return JsonResponse({'error': str(e)}, status=500)
     
 
 @login_required
 @require_http_methods(["GET"])
 def history_view(request):
-    if not request.user:
-        return HttpResponseBadRequest()
-    
     # Get all history entries from any users (maximum of 100 entries)
-    all_history = HistoryManager.all().order_by('-timestamp')[:100]
-    my_history = HistoryManager.filter(user=request.user).order_by('-timestamp')[:100]
+    all_history = History.objects.all().order_by('-timestamp')[:100]
+    my_history = History.objects.filter(user=request.user).order_by('-timestamp')[:100]
     
     return render(request, 'wheel/history.html', {'all_history': all_history, 'my_history': my_history})
 
@@ -121,16 +134,12 @@ def history_view(request):
 @login_required
 @require_http_methods(["GET"])
 def faq_view(request):
-    if not request.user:
-        return HttpResponseBadRequest()
-    
     # Render the FAQ page
     return render(request, 'wheel/faq.html')
 
 
 @require_http_methods(["GET"])
 def patch_notes_api(request):
-    """API pour récupérer les patch notes actuelles"""
     try:
         patch_notes_path = os.path.join(settings.BASE_DIR, 'data', 'patch_notes.json')
         with open(patch_notes_path, 'r', encoding='utf-8') as f:
@@ -142,21 +151,41 @@ def patch_notes_api(request):
             'versions': {}
         })
     except Exception as e:
-        logger.error(f"Erreur lors de la lecture des patch notes: {e}")
-        return JsonResponse({'error': 'Erreur serveur'}, status=500)
+        logger.error(f"Error while reading patch notes: {e}")
+        return JsonResponse({'error': 'Server error'}, status=500)
 
 
 # ---------------- Admin Wheel Management ----------------
+
+def _require_superuser(request):
+    """Helper to check superuser access"""
+    if not request.user.is_superuser:
+        return HttpResponseForbidden()
+    return None
+
+def _get_wheel_file_path(config):
+    """Helper to get file path for a wheel config"""
+    return os.path.join(settings.WHEEL_CONFIGS_DIR, f'jackpots_{config}.json')
+
+def _reload_wheels_and_versions():
+    """Helper to reload configs and rebuild version IDs"""
+    settings.WHEEL_CONFIGS = load_wheels(settings.WHEEL_CONFIGS_DIR)
+    settings.WHEEL_VERSION_IDS = build_wheel_versions(settings.WHEEL_CONFIGS)
+    return settings.WHEEL_VERSION_IDS
+
+def _normalize_wheel_name(name):
+    """Helper to normalize wheel names"""
+    return name.lower().replace(' ', '_')
+
+
 @login_required
 @require_GET
 def admin_wheels(request):
-    if not request.user.is_superuser:
-        return HttpResponseForbidden()
+    error = _require_superuser(request)
+    if error: return error
 
-    # Provide a simple JSON list if expecting API, otherwise render template (template can be added later)
     data = {}
-    dyn = getattr(settings, 'DYNAMIC_WHEELS', {})
-    for slug, meta in dyn.items():
+    for slug, meta in settings.WHEEL_CONFIGS.items():
         sectors = meta.get('sectors', [])
         data[slug] = {
             'count': len(sectors),
@@ -164,6 +193,7 @@ def admin_wheels(request):
             'title': meta.get('title'),
             'url': meta.get('url', slug)
         }
+    
     if request.headers.get('Accept', '').startswith('application/json'):
         return JsonResponse({'configs': data})
     return render(request, 'wheel/admin_wheels.html', {'configs': data})
@@ -172,154 +202,157 @@ def admin_wheels(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def edit_wheel(request, config: str):
-    if not request.user.is_superuser:
-        return HttpResponseForbidden()
+    error = _require_superuser(request)
+    if error: return error
+    
     if config not in settings.WHEEL_CONFIGS:
         return HttpResponseBadRequest("Unknown wheel configuration")
 
-    wheel_dir = settings.WHEEL_CONFIGS_DIR
-    file_path = os.path.join(wheel_dir, f'jackpots_{config}.json')
+    file_path = _get_wheel_file_path(config)
 
     if request.method == 'GET':
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                file_data = json.load(f)
+            current_sectors = settings.WHEEL_CONFIGS[config]['sectors']
+            return JsonResponse({'file': file_data, 'ordered': current_sectors})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
-        # Return sectors in current in-memory order too
-        ordered = settings.WHEEL_CONFIGS[config]
-        return JsonResponse({
-            'file': data,
-            'ordered': ordered
-        })
 
-    # POST: update wheel definition
+    # POST: Update wheel
     try:
         payload = json.loads(request.body)
     except Exception:
         return HttpResponseBadRequest('Invalid JSON')
 
-    sectors_payload = payload.get('sectors')
-    jackpots = payload.get('jackpots')
-    new_title = payload.get('title')
-    new_url = payload.get('url')
-
-    to_write = None
-    if isinstance(sectors_payload, list):
-        # Direct ordered sequence mode
-        to_write = {'sequence': sectors_payload}
-    elif isinstance(jackpots, dict):
-        to_write = {'jackpots': jackpots}
+    # Determine what format we're receiving
+    if 'sectors' in payload and isinstance(payload['sectors'], list):
+        wheel_data = {'sequence': payload['sectors']}
+    elif 'jackpots' in payload and isinstance(payload['jackpots'], dict):
+        wheel_data = {'jackpots': payload['jackpots']}
     else:
-        return HttpResponseBadRequest('Expected either {"sectors": [...]} or {"jackpots": {...}}')
+        return HttpResponseBadRequest('Expected either "sectors" or "jackpots" in payload')
 
-    # Preserve existing metadata (title, slug) if present
-    existing = {}
+    # Handle metadata (preserve existing if not provided)
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             existing = json.load(f)
     except Exception:
-        pass
-    # Determine slug/url final
-    final_url = (new_url or existing.get('url') or existing.get('slug') or config).lower().replace(' ', '_')
-    final_title = new_title or existing.get('title') or final_url.capitalize()
-    to_write.setdefault('url', final_url)
-    to_write.setdefault('title', final_title)
-    # Keep legacy slug for backward compat
-    to_write.setdefault('slug', final_url)
+        existing = {}
 
+    final_url = _normalize_wheel_name(payload.get('url') or existing.get('url') or config)
+    final_title = payload.get('title') or existing.get('title') or final_url.capitalize()
+    
+    wheel_data.update({
+        'url': final_url,
+        'title': final_title,
+        'slug': final_url  # Legacy compat
+    })
+
+    # Save file
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump(to_write, f, indent=2, ensure_ascii=False)
+            json.dump(wheel_data, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        return JsonResponse({'error': f'Failed to write {file_path}: {e}'}, status=500)
+        return JsonResponse({'error': f'Failed to write file: {e}'}, status=500)
 
-    from luckywheel.utils import load_wheels
-    # Reload dynamic wheels (single pass reload for simplicity)
-    settings.DYNAMIC_WHEELS = load_wheels(settings.WHEEL_CONFIGS_DIR, balance=False)
-    settings.WHEEL_CONFIGS = { slug: meta['sectors'] for slug, meta in settings.DYNAMIC_WHEELS.items() }
-    return JsonResponse({'status': 'ok', 'sectors': settings.WHEEL_CONFIGS.get(final_url, []), 'title': final_title, 'url': final_url})
+    # Reload and return
+    versions = _reload_wheels_and_versions()
+    logger.info(f"Rebuilt wheel versions after edit: {versions}")
+    
+    new_sectors = settings.WHEEL_CONFIGS.get(final_url, {}).get('sectors', [])
+    return JsonResponse({
+        'status': 'ok', 
+        'sectors': new_sectors, 
+        'title': final_title, 
+        'url': final_url
+    })
 
 
 @login_required
 @require_POST
 def create_wheel(request):
-    if not request.user.is_superuser:
-        return HttpResponseForbidden()
+    error = _require_superuser(request)
+    if error: return error
+
     try:
         payload = json.loads(request.body)
     except Exception:
         return HttpResponseBadRequest('Invalid JSON')
-    raw_url = payload.get('url') or payload.get('name')
-    title = payload.get('title')
-    if not raw_url:
-        return HttpResponseBadRequest('Missing url')
-    url_norm = raw_url.lower().replace(' ', '_')
-    if url_norm in settings.WHEEL_CONFIGS:
+    
+    raw_name = payload.get('url') or payload.get('name')
+    if not raw_name:
+        return HttpResponseBadRequest('Missing url/name')
+    
+    normalized_name = _normalize_wheel_name(raw_name)
+    if normalized_name in settings.WHEEL_CONFIGS:
         return HttpResponseBadRequest('Wheel already exists')
-    final_title = title or url_norm.capitalize()
-    file_path = os.path.join(settings.WHEEL_CONFIGS_DIR, f'jackpots_{url_norm}.json')
+    
+    title = payload.get('title') or normalized_name.capitalize()
+    wheel_data = {
+        'url': normalized_name,
+        'slug': normalized_name,
+        'title': title,
+        'sequence': []
+    }
+    
+    file_path = _get_wheel_file_path(normalized_name)
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
-            json.dump({'url': url_norm, 'slug': url_norm, 'title': final_title, 'sequence': []}, f, indent=2, ensure_ascii=False)
+            json.dump(wheel_data, f, indent=2, ensure_ascii=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    # Reload global stores to include new wheel
-    from luckywheel.utils import load_wheels
-    settings.DYNAMIC_WHEELS = load_wheels(settings.WHEEL_CONFIGS_DIR, balance=False)
-    settings.WHEEL_CONFIGS = { slug: meta['sectors'] for slug, meta in settings.DYNAMIC_WHEELS.items() }
-    return JsonResponse({'status': 'created', 'url': url_norm, 'title': final_title})
+    
+    versions = _reload_wheels_and_versions()
+    logger.info(f"Rebuilt wheel versions after create: {versions}")
+    return JsonResponse({'status': 'created', 'url': normalized_name, 'title': title})
 
 
 @login_required
 @require_POST
 def delete_wheel(request, config: str):
-    if not request.user.is_superuser:
-        return HttpResponseForbidden()
+    error = _require_superuser(request)
+    if error: return error
+    
     if config not in settings.WHEEL_CONFIGS:
         return HttpResponseBadRequest('Unknown wheel')
-    file_path = os.path.join(settings.WHEEL_CONFIGS_DIR, f'jackpots_{config}.json')
+    
+    # Remove file
+    file_path = _get_wheel_file_path(config)
     try:
         if os.path.exists(file_path):
             os.remove(file_path)
     except Exception as e:
         return JsonResponse({'error': f'Cannot delete file: {e}'}, status=500)
+    
+    # Remove from memory and update session if needed
     del settings.WHEEL_CONFIGS[config]
-    if hasattr(settings, 'DYNAMIC_WHEELS') and config in settings.DYNAMIC_WHEELS:
-        del settings.DYNAMIC_WHEELS[config]
-    # Clean session if user was on this config
     if request.session.get('wheel_config_type') == config:
         fallback = next(iter(settings.WHEEL_CONFIGS.keys()), None)
         request.session['wheel_config_type'] = fallback
+    
+    versions = _reload_wheels_and_versions()
+    logger.info(f"Rebuilt wheel versions after delete: {versions}")
     return JsonResponse({'status': 'deleted', 'name': config})
-
-
-@login_required
-@require_POST
-def reload_wheels(request):
-    if not request.user.is_superuser:
-        return HttpResponseForbidden()
-    from luckywheel.utils import load_wheels
-    settings.DYNAMIC_WHEELS = load_wheels(settings.WHEEL_CONFIGS_DIR, balance=False)
-    settings.WHEEL_CONFIGS = { slug: meta['sectors'] for slug, meta in settings.DYNAMIC_WHEELS.items() }
-    return JsonResponse({'status': 'reloaded', 'count': len(settings.WHEEL_CONFIGS)})
 
 
 @login_required
 @require_GET
 def download_wheel(request, config: str):
-    if not request.user.is_superuser:
-        return HttpResponseForbidden()
+    error = _require_superuser(request)
+    if error: return error
+    
     if config not in settings.WHEEL_CONFIGS:
         return HttpResponseBadRequest('Unknown wheel')
-    wheel_dir = settings.WHEEL_CONFIGS_DIR
-    file_path = os.path.join(wheel_dir, f'jackpots_{config}.json')
+    
+    file_path = _get_wheel_file_path(config)
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             data = f.read()
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    from django.http import HttpResponse
-    resp = HttpResponse(data, content_type='application/json')
-    resp['Content-Disposition'] = f'attachment; filename="jackpots_{config}.json"'
-    return resp
+    
+    response = HttpResponse(data, content_type='application/json')
+    response['Content-Disposition'] = f'attachment; filename="jackpots_{config}.json"'
+    return response
+

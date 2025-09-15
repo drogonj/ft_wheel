@@ -29,6 +29,15 @@ function startTimer() {
 
 // INIT
 export async function init_time_to_spin()  {
+  // Test mode or superuser: infinite spins, no countdown logic needed
+  if (window.USER_TEST_MODE) {
+    const el = document.getElementById("counter");
+    if (el) {
+      el.textContent = '∞';
+    }
+    counter_distance = 0;
+    return;
+  }
   try {
     const response = await fetch(`/time_to_spin/`, {
       method: 'GET',

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import History, HistoryManager
+from .models import History
 
 # Register your models here.
 class HistoryAdmin(admin.ModelAdmin):
