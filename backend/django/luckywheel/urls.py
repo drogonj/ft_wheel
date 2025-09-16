@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('wheel.urls')),
     path('', include('custom_auth.urls')),
+    path('', include('administration.urls')),
 ]

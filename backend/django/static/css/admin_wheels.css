@@ -67,14 +67,10 @@ tr:hover {
     background:#222;
     border:1px solid #444;
 }
-.api-route {
-    width:140px;
-    font-family:monospace;
-}
 .color-input {
     width:100px;
 }
-.text-input {
+.label-input, .color-input, .message-input, .function-input, .args-input {
     width:150px;
 }
 .label-input {

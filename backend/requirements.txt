@@ -31,3 +31,5 @@ whitenoise==6.9.0
 zope.interface==7.2
 oauthlib==3.2.0
 requests-oauthlib==2.0.0
+importlib==1.0.4
+importlib-metadata==6.8.0

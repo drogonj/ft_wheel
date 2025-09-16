@@ -32,7 +32,6 @@ async function fetchWheels(){
 function buildRow(sector){
   const node = rowTpl.content.firstElementChild.cloneNode(true);
   node.querySelector('.label-input').value = sector.label || '';
-  node.querySelector('.text-input').value = sector.text || '';
 
   const colorInput = node.querySelector('.color-input');
   colorInput.value = sector.color || '';
@@ -41,12 +40,23 @@ function buildRow(sector){
     colorInput.style.borderColor = colorInput.value || '#000';
   });
 
-
   node.querySelector('.message-input').value = sector.message || '';
-  const apiRoute = (sector.api_route && sector.api_route.route) || '';
-  const apiValue = (sector.api_route && sector.api_route.value) ?? '';
-  node.querySelector('.api-route').value = apiRoute;
-  node.querySelector('.api-value').value = apiValue;
+  
+  // Handle function and args fields
+  node.querySelector('.function-input').value = sector.function || 'builtins.default';
+  
+  // Convert args object to JSON string for display
+  let argsStr = '';
+  if (sector.args && typeof sector.args === 'object') {
+    try {
+      argsStr = JSON.stringify(sector.args);
+    } catch(e) {
+      argsStr = '{}';
+    }
+  } else {
+    argsStr = '{}';
+  }
+  node.querySelector('.args-input').value = argsStr;
   node.querySelector('.del').addEventListener('click', ()=>{
     node.remove();
     syncFromTable();
@@ -57,16 +67,18 @@ function buildRow(sector){
     // Extract current values from this row's inputs, not the original sector data
     const currentData = {
       label: node.querySelector('.label-input').value.trim(),
-      text: node.querySelector('.text-input').value.trim(),
       color: node.querySelector('.color-input').value.trim(),
       message: node.querySelector('.message-input').value.trim() || null,
-      api_route: ( ()=>{
-        const route = node.querySelector('.api-route').value.trim();
-        const valRaw = node.querySelector('.api-value').value.trim();
-        if(!route) return null;
-        let value = valRaw;
-        if(/^-?\d+$/.test(valRaw)) value = parseInt(valRaw,10);
-        return { route, value };
+      function: node.querySelector('.function-input').value.trim() || 'builtins.default',
+      args: ( ()=>{
+        const argsStr = node.querySelector('.args-input').value.trim();
+        if(!argsStr) return {};
+        try {
+          return JSON.parse(argsStr);
+        } catch(e) {
+          console.warn('Invalid JSON in args, using empty object:', e);
+          return {};
+        }
       })()
     };
     const newNode = buildRow(currentData);
@@ -88,16 +100,18 @@ function reindex(){
 function syncFromTable(){
   sectors = [...tbody.children].map(tr=>({
     label: tr.querySelector('.label-input').value.trim(),
-    text: tr.querySelector('.text-input').value.trim(),
     color: tr.querySelector('.color-input').value.trim(),
     message: tr.querySelector('.message-input').value.trim() || null,
-    api_route: ( ()=>{
-      const route = tr.querySelector('.api-route').value.trim();
-      const valRaw = tr.querySelector('.api-value').value.trim();
-      if(!route) return null;
-      let value = valRaw;
-      if(/^-?\d+$/.test(valRaw)) value = parseInt(valRaw,10);
-      return { route, value };
+    function: tr.querySelector('.function-input').value.trim() || 'builtins.default',
+    args: ( ()=>{
+      const argsStr = tr.querySelector('.args-input').value.trim();
+      if(!argsStr) return {};
+      try {
+        return JSON.parse(argsStr);
+      } catch(e) {
+        console.warn('Invalid JSON in args for row, using empty object:', e);
+        return {};
+      }
     })()
   }));
 }
@@ -122,7 +136,7 @@ document.getElementById('wheel-select').addEventListener('change', e=>{
 });
 
 document.getElementById('add-sector').addEventListener('click', ()=>{
-  const s = { label:'', text:'', color:'#', message:'', api_route:null };
+  const s = { label:'', color:'#FFFFFF', message:'', function:'builtins.default', args:{} };
   tbody.appendChild(buildRow(s));
   syncFromTable();
   reindex();

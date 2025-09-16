@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'custom_auth',
     'wheel',
+    'administration',
 ]
 
 MIDDLEWARE = [

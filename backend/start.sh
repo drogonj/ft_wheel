@@ -1,6 +1,7 @@
 #!/bin/sh
 
-mkdir django/staticfiles
+mkdir /backend/django/staticfiles
+
 python3 django/manage.py collectstatic --noinput
 echo ""
 python3 django/manage.py makemigrations
