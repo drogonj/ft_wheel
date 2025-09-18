@@ -73,13 +73,16 @@ def spin_view(request):
     request.user.save(update_fields=["last_spin"])
 
     try:
-        handle_jackpots(request.user, sectors[result])
+        success, message, data = handle_jackpots(request.user, sectors[result])
+            
         details=sectors[result]['label']
 
         History.objects.create(
             wheel=config_type,
             details=details,
             color=sectors[result]['color'],
+            r_message=message,
+            r_data=json.dumps(data) if isinstance(data, dict) else str(data),
             user=request.user
         )
     except Exception as e:
@@ -123,9 +126,9 @@ def change_wheel_config(request):
 @require_http_methods(["GET"])
 def history_view(request):
     # Get all history entries from any users (maximum of 100 entries)
-    all_history = History.objects.all().order_by('-timestamp')[:100]
-    my_history = History.objects.filter(user=request.user).order_by('-timestamp')[:100]
-    
+    all_history = History.objects.all().only('id', 'timestamp', 'wheel', 'details', 'color', 'user__login').order_by('-timestamp')[:100]
+    my_history = History.objects.filter(user=request.user).only('id', 'timestamp', 'wheel', 'details', 'color').order_by('-timestamp')[:100]
+
     return render(request, 'wheel/history.html', {'all_history': all_history, 'my_history': my_history})
 
 

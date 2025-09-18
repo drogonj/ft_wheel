@@ -1,13 +1,12 @@
 
-def default(api_intra: object, user: object, args: dict):
-    """Default function when landing on a sector."""
+def default(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
+    """Default function when landing on a sector.
+    Returns: (bool, str) - (success, message)
+    """
+    return True, "Default jackpot completed successfully", {}
 
-    try:
-        api_intra.request('GET', f'/users/{user.login}')
-    except Exception as e:
-        print(f"Error fetching user data: {e}")
-    return True
-
-def cancel_default(api_intra: object, user: object, args: dict):
-    """Default function when cancelling a sector."""
-    return True
+def cancel_default(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
+    """Default function when cancelling a sector.
+    Returns: (bool, str) - (success, message)
+    """
+    return True, "Default jackpot cancellation completed", {}

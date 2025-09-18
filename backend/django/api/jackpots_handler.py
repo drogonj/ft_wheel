@@ -1,19 +1,39 @@
-import importlib, logging
+import importlib, logging, queue, os
+from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 
 from api.intra import intra_api
 
-logger = logging.getLogger('backend')
+# ---------------------
+# non-blocking logging setup
+# ---------------------
+LOG_DIR = "/var/log/ft_wheel"
+os.makedirs(LOG_DIR, exist_ok=True)
 
-# Reminder of jackpot structure:
-# "another one": {
-#     "color": "#FFFFFF",
-#     "number": 1,
-#     "message": "You won something huge !",
-#     "function": "builtins.another_one",
-#     "args": {
-#         "amount": 1000
-#     }
-# }
+log_queue = queue.Queue(-1)  # file-backed queue handled by QueueListener thread
+
+file_info_path = os.path.join(LOG_DIR, "jackpot_info.log")
+file_error_path = os.path.join(LOG_DIR, "jackpot_error.log")
+
+file_handler_info = RotatingFileHandler(file_info_path, maxBytes=10 * 1024 * 1024, backupCount=3)
+file_handler_info.setLevel(logging.INFO)
+file_handler_info.addFilter(lambda record: record.levelno <= logging.INFO)
+file_handler_error = RotatingFileHandler(file_error_path, maxBytes=10 * 1024 * 1024, backupCount=3)
+file_handler_error.setLevel(logging.ERROR)
+file_handler_error.addFilter(lambda record: record.levelno >= logging.ERROR)
+
+
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+file_handler_info.setFormatter(formatter)
+file_handler_error.setFormatter(formatter)
+
+# QueueListener will consume log_queue and write to handlers on a background thread.
+_queue_listener = QueueListener(log_queue, file_handler_info, file_handler_error)
+_queue_listener.start()
+
+logger = logging.getLogger("intra")
+logger.setLevel(logging.INFO)
+logger.addHandler(QueueHandler(log_queue))
+
 
 def _parse_function(jackpot):
     """
@@ -54,6 +74,11 @@ def _parse_function(jackpot):
     if not hasattr(module, func_name):
         raise Exception(f"Module '{full_module_path}' does not have a function '{func_name}'.")
     
+    # module muste have a cancel_<func_name> function as well
+    cancel_func_name = f'cancel_{func_name}'
+    if not hasattr(module, cancel_func_name):
+        raise Exception(f"Module '{full_module_path}' does not have a cancel function '{cancel_func_name}'.")
+
     func = getattr(module, func_name)
     if not callable(func):
         raise Exception(f"'{func_name}' in module '{full_module_path}' is not callable.")
@@ -61,7 +86,7 @@ def _parse_function(jackpot):
     return func_name, func  # Return (func_name, func_object)
 
 
-def handle_jackpots(user, jackpot):
+def handle_jackpots(user, jackpot) -> tuple[bool, str, dict]:
     """
     Handle jackpots and choose the route.
     Called by wheel.views.spin
@@ -72,23 +97,28 @@ def handle_jackpots(user, jackpot):
     Returns: None
     """
     if not user or not jackpot:
-        intra_api.intra_logger("ERROR", f"handle_jackpots called with invalid user or jackpot: user={user}, jackpot={jackpot}")
-        logger.error(f"handle_jackpots called with invalid user or jackpot: user={user}, jackpot={jackpot}")
-        return
+        error_msg = f"handle_jackpots called with invalid user or jackpot: user={user}, jackpot={jackpot}"
+        logger.error(error_msg)
+        return False, error_msg, {}
     if not isinstance(jackpot, dict):
-        intra_api.intra_logger("ERROR", f"handle_jackpots called with invalid jackpot type: {type(jackpot)}")
-        logger.error(f"handle_jackpots called with invalid jackpot type: {type(jackpot)}")
-        return
+        error_msg = f"Jackpot is not a dictionary: {jackpot}"
+        logger.error(error_msg)
+        return False, error_msg, {}
     if 'function' not in jackpot or not jackpot['function']:
-        intra_api.intra_logger("INFO", f"Jackpot '{jackpot.get('label', 'unknown')}' has no function defined, skipping.")
-        logger.info(f"Jackpot '{jackpot.get('label', 'unknown')}' has no function defined, skipping.")
-        return
-    
+        error_msg = f"Jackpot '{jackpot.get('label', 'unknown')}' has no function defined, skipping."
+        logger.info(error_msg)
+        return False, error_msg, {}
+
     try:
         func_name, func = _parse_function(jackpot)
-        func(intra_api, user, jackpot.get('args', {}))
+        success, msg, data = func(intra_api, user, jackpot.get('args', {}))
 
+        if not success:
+            #handle failure (if failure come from intra api, response contains the error details)
+            logger.error(f"{msg}\n{str(data)}")
+            return False, msg, data
+        logger.info(f"{msg}\n{str(data)}")
+        return True, msg, data
     except Exception as e:
-        logger.error(f"Error in handle_jackpot '{jackpot.get('label', 'unknown')}': {e}")
-        intra_api.intra_logger("ERROR", f"Error in handle_jackpot '{jackpot.get('label', 'unknown')}': {e}")
-        return
+        logger.error(f"Unexpected error in handle_jackpot '{jackpot.get('label', 'unknown')}': {e}")
+        return False, str(e), {}

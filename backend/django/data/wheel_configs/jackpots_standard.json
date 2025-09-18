@@ -3,12 +3,15 @@
     "title": "Standard Mode ⚖️",
     "jackpots": {
 
-        "default": {
+        "1 Coalition point !": {
             "color": "#FF0000",
             "number": 3,
-            "message": "You won the default jackpot!",
-            "function": "builtins.default",
-            "args": {}
+            "message": "You won the coalition jackpot!",
+            "function": "builtins.coa_points",
+            "args": {
+                "amount": 1,
+                "reason": "{login} won 1 coalition point !"
+            }
         }
 
     }
