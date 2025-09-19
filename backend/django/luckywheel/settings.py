@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'daphne',
     'django.contrib.staticfiles',
-    'custom_auth',
+    'users',
     'wheel',
     'administration',
 ]
@@ -57,7 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'custom_auth.middleware.ConsentMiddleware',
+    'users.middleware.ConsentMiddleware',
 ]
 
 ROOT_URLCONF = 'luckywheel.urls'
@@ -180,7 +180,7 @@ LOGIN_URL = '/login/'
 
 LOGIN_REDIRECT_URL = ''
 
-AUTH_USER_MODEL = "custom_auth.Account"
+AUTH_USER_MODEL = "users.Account"
 
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True

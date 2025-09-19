@@ -17,9 +17,7 @@ class ConsentMiddleware:
             reverse('login'),
             reverse('logout'),
             reverse('callback'),
-            '/admin',
             '/static/',
-            '/favicon.ico',
         ]
 
         # Check if the user is authenticated and has not given consent

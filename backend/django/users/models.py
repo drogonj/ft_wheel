@@ -115,27 +115,3 @@ class OauthState(models.Model):
         return f"{self.state}"
     
     objects = OauthStateManager()
-
-
-
-class AuthorizedExternalUserManager(models.Manager):
-    def get_or_create_user(self, login):
-        if not login:
-            raise ValueError("login must be provided")
-        try:
-            return self.get(login=login)
-        except AuthorizedExternalUser.DoesNotExist:
-            return self.create(login=login)
-
-
-
-# This allow users who aren't in Piscine to use the app
-# Use /admin to add external users
-class AuthorizedExternalUser(models.Model):
-    login = models.CharField(max_length=20, unique=True, blank=False, null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    objects = AuthorizedExternalUserManager()
-
-    def __str__(self):
-        return f"Special authorization for {self.login}"

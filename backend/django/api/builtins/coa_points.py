@@ -62,6 +62,7 @@ def coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, 
             - reason: str, reason for the points change (optional)
     """
 
+    # Validate args
     amount = int(args.get('amount', 0))
     if not isinstance(amount, int):
         raise ValueError("Amount must be an integer.")
@@ -74,6 +75,7 @@ def coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, 
     # Fetch user coalitions
     success, msg, data = api_intra.request('GET', f'/v2/users/{user.login}/coalitions')
 
+    # Handle errors
     if not success:
         return False, f"Failed to fetch coalition data for {user.login}: {msg}", data
     if not data or len(data) == 0:
@@ -86,11 +88,11 @@ def coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, 
     if not coa_id:
         return False, f"Coalition ID not found for user {user.login}.", data
 
+    # Sending points change request
     payload = {
         "score[value]": amount,
         "score[reason]": reason
     }
-
     success, msg, n_data = api_intra.request(method='POST', url=f'/v2/coalitions/{coa_id}/scores', headers={}, data=payload)
     return success, msg, n_data
 

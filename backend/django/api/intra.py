@@ -1,7 +1,7 @@
 import time, asyncio, httpx
 from asgiref.sync import async_to_sync
 
-from custom_auth.views import oauth_secrets
+from users.views import oauth_secrets
 
 
 # ---------------------
@@ -18,7 +18,7 @@ class AsyncIntraAPI:
     TOKEN_URL = "https://api.intra.42.fr/oauth/token"
 
     def __init__(self, client_id: str = None, client_secret: str = None, api_url: str = "https://api.intra.42.fr"):
-        # If not provided, fallback to oauth_secrets imported from custom_auth.views
+        # If not provided, fallback to oauth_secrets imported from users.views
         self.client_id = client_id if client_id is not None else oauth_secrets.get("oauth_uid")
         self.client_secret = client_secret if client_secret is not None else oauth_secrets.get("oauth_secret")
         self.api_url = api_url

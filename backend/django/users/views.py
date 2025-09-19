@@ -7,7 +7,7 @@ from django.conf import settings
 import logging, requests, json
 from django.db import IntegrityError
 from luckywheel.utils import docker_secret
-from .models import OauthStateManager, OauthState, AuthorizedExternalUser
+from .models import OauthStateManager, OauthState
 
 User = get_user_model()
 OauthStateManager = OauthState.objects
@@ -38,7 +38,7 @@ def login_view(request):
 		logger.error(f"Unexpected error: {e}")
 		return HttpResponseBadRequest('An unexpected error occurred.')
 	
-	return render(request, 'custom_auth/auth.html',
+	return render(request, 'users/auth.html',
 	{
 		'oauth_redirect_uri': f"{oauth_secrets['oauth_redirect_uri']}&state={oauth_state.state}",
 	})
@@ -86,19 +86,6 @@ def callback_view(request):
 
 		user_data = response.json()
 
-		# If user's cursus isn't normal (for a pisciner) or campus.campus_id is not 48
-		if user_data.get('cursus_users') is None or len(user_data.get('cursus_users')) != 1 or \
-			user_data.get('cursus_users')[0].get('cursus_id', None) != 9 or (campus[0].get('id') if (campus := user_data.get('campus')) else None) != 48:
-
-			# If user is in AuthorizedExternalUserManager, allow login
-			if not AuthorizedExternalUser.objects.filter(login=user_data.get('login')).exists():
-				oauth_state.delete()
-				# If user is not in AuthorizedExternalUserManager, return bad request
-				logger.warning(f"Unauthorized access attempt by user: {user_data.get('login')}")
-				return redirect(f"{settings.WEBSITE_URL}/not_authorized")
-			
-
-
 		user, created = User.objects.get_or_create(
 			login=user_data.get('login'),
 		)
@@ -138,7 +125,7 @@ def logout_view(request):
 @require_http_methods(["GET"])
 def consent_view(request):
 	if request.user:
-		return render(request, 'custom_auth/consent.html')
+		return render(request, 'users/consent.html')
 	else:
 		return HttpResponseBadRequest()
 	
@@ -159,4 +146,4 @@ def accept_consent_view(request):
 @require_http_methods(["GET"])
 def not_authorized_view(request):
 	# This view is used to display a message when the user is not authorized
-	return render(request, 'custom_auth/not_authorized.html', status=403)
+	return render(request, 'users/not_authorized.html', status=403)

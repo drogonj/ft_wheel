@@ -7,8 +7,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.views.decorators.http import require_GET, require_POST
 from datetime import timedelta
-import random, logging, json
-import os
+import random, logging, json, os, ast
 
 from .models import History
 from luckywheel.utils import load_wheels, build_wheel_versions
@@ -77,12 +76,19 @@ def spin_view(request):
             
         details=sectors[result]['label']
 
+        if type(data) is ValueError:
+            data = data.args[0]
+        elif type(data) is str:
+            data = ast.literal_eval(data)
+        else:
+            raise ValueError("Unexpected data type from jackpot handler")
+
         History.objects.create(
             wheel=config_type,
             details=details,
             color=sectors[result]['color'],
             r_message=message,
-            r_data=json.dumps(data) if isinstance(data, dict) else str(data),
+            r_data=data,
             user=request.user
         )
     except Exception as e:

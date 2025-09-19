@@ -13,7 +13,7 @@ class History(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='histories')
 
     r_message = models.CharField(blank=True, null=True)  # message of intra response
-    r_data = models.TextField(blank=True, null=True)  # data of intra response
+    r_data = models.JSONField(blank=True, null=True)  # data of intra response
 
     def __str__(self):
         return f"{self.timestamp} - {self.user} - {self.wheel} - {self.details}"

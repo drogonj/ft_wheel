@@ -7,8 +7,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'luckywheel.settings')
 django.setup()
 User = get_user_model()
 
-from custom_auth.models import AuthorizedExternalUser
-
 # Opening & extracting data/superusers.json
 # Expect this format :
 #{
@@ -37,7 +35,6 @@ for login, details in data['superusers'].items():
             login=login,
             test_mode=testmode,
         )
-        AuthorizedExternalUser.objects.get_or_create(login=login)
         print(f'Superuser {login} created.')
     else:
         print(f'Superuser {login} already exists.')
