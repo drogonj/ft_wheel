@@ -18,7 +18,7 @@ def wheel_list(request):
     # testmode: expose if user is superuser or has attribute test_mode True
     user = getattr(request, 'user', None)
     is_super = bool(getattr(user, 'is_superuser', False))
-    test_mode = bool(is_super or getattr(user, 'test_mode', False))  # Reuse is_super instead of re-checking
+    test_mode = bool(getattr(user, 'test_mode', False))
     return {
         'WHEEL_LIST': wheels_meta,
         'USER_IS_SUPERUSER': is_super,

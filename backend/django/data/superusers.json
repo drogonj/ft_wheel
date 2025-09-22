@@ -1,10 +1,10 @@
 {
      "superusers" : {
-        "bchevall" : {
-            "testmode": true
-        },
+
        "ngalzand" : {
-            "testmode": true
+            "testmode": true,
+            "role": "admin"
        }
+       
      }
 }

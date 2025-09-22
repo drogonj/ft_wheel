@@ -11,21 +11,33 @@ class AccountManager(BaseUserManager):
         user.save()
         return user
 
-    def create_superuser(self, login, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
+    def create_superuser(self, login, role, **extra_fields):
+        extra_fields.setdefault("role", role)
+        extra_fields.setdefault("is_staff", True if role == 'admin' else False)
         return self.create_user(login, **extra_fields)
 
 
 
 class Account(AbstractBaseUser):
+    ROLES = [
+        ('user', 'User'),
+        ('moderator', 'Moderator'),
+        ('admin', 'Admin'),
+    ]
+
+    MODERATOR_PERMS = [
+        'administration.history',
+        'administration.add_history_marked',
+    ]
+
     date_joined = models.DateTimeField(verbose_name="date joined", auto_now_add=True)
     last_login = models.DateTimeField(verbose_name="last login", auto_now=True)
 
     login = models.CharField(max_length=20, unique=True, blank=False, null=False)
 
-    is_superuser = models.BooleanField(default=False)
-    is_staff = models.BooleanField(default=False)
+    # User rights -> [user, moderator, admin]
+    role = models.CharField(max_length=10, choices=ROLES, default='user')
+    is_staff = models.BooleanField(default=False)  # Required for admin access (not used otherwise)
     test_mode = models.BooleanField(default=False)
 
     has_consent = models.BooleanField(default=False)
@@ -43,6 +55,23 @@ class Account(AbstractBaseUser):
     def __str__(self):
         return f"{self.login}"
 
+    @property
+    def is_superuser(self):
+        return self.role == 'admin'
+
+    @is_superuser.setter
+    def is_superuser(self, value):
+        if value:
+            self.role = 'admin'
+        elif self.role == 'admin':
+            self.role = 'user'
+
+    def is_admin(self):
+        return self.role == 'admin'
+    
+    def is_moderator(self):
+        return self.role in ['admin', 'moderator']
+
     def set_password(self, raw_password):
         raise NotImplementedError("Password not implemented")
 
@@ -50,10 +79,16 @@ class Account(AbstractBaseUser):
         return False
     
     def has_perm(self, perm, obj=None):
-        return True
+        if self.is_admin():
+            return True
+        elif self.is_moderator() and perm in self.MODERATOR_PERMS:
+            return True
+        return False
 
     def has_module_perms(self, app_label):
-        return True
+        if self.is_moderator():
+            return True
+        return ['wheel', 'users'].__contains__(app_label)
     
     def time_to_spin(self):
         if not self.last_spin:
