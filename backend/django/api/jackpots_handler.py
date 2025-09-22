@@ -35,7 +35,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(QueueHandler(log_queue))
 
 
-def _parse_function(jackpot):
+def _parse_function(function):
     """
     Parse the function path from the jackpot configuration.
     Args:
@@ -49,7 +49,6 @@ def _parse_function(jackpot):
     -> and a function called 'cancel_add_points' (for rollback)
     """
 
-    function = jackpot['function']
     if not function.startswith('builtins.') and not function.startswith('mods.'):
         raise Exception("Function path must start with 'builtins.' or 'mods.'.")
     
@@ -83,7 +82,12 @@ def _parse_function(jackpot):
     if not callable(func):
         raise Exception(f"'{func_name}' in module '{full_module_path}' is not callable.")
 
-    return func_name, func  # Return (func_name, func_object)
+    cancel_func = getattr(module, cancel_func_name)
+    if not callable(cancel_func):
+        raise Exception(f"'{cancel_func_name}' in module '{full_module_path}' is not callable.")
+
+    return func, cancel_func  # Return functions objects
+
 
 
 def handle_jackpots(user, jackpot) -> tuple[bool, str, dict]:
@@ -104,13 +108,13 @@ def handle_jackpots(user, jackpot) -> tuple[bool, str, dict]:
         error_msg = f"Jackpot is not a dictionary: {jackpot}"
         logger.error(error_msg)
         return False, error_msg, {}
-    if 'function' not in jackpot or not jackpot['function']:
+    if 'function' not in jackpot or not jackpot['function'] or not isinstance(jackpot['function'], str):
         error_msg = f"Jackpot '{jackpot.get('label', 'unknown')}' has no function defined, skipping."
         logger.info(error_msg)
         return False, error_msg, {}
 
     try:
-        func_name, func = _parse_function(jackpot)
+        func, cancel_func = _parse_function(jackpot['function'])
         success, msg, data = func(intra_api, user, jackpot.get('args', {}))
 
         if not success:
@@ -121,4 +125,43 @@ def handle_jackpots(user, jackpot) -> tuple[bool, str, dict]:
         return True, msg, data
     except Exception as e:
         logger.error(f"Unexpected error in handle_jackpot '{jackpot.get('label', 'unknown')}': {e}")
+        return False, str(e), {}
+
+
+
+def cancel_jackpot(user: object, function_name: str, r_data: dict) -> tuple[bool, str, dict]:
+    """
+    Cancel a jackpot by calling its cancel function.
+    Called by administration.history_views.cancel_history_api
+
+    Args:
+        user: User instance
+        jackpot: dict - jackpot configuration
+    Returns: (bool, str, dict) - (success, message, r_data)
+    """
+    if not user or not function_name:
+        error_msg = f"cancel_jackpot called with invalid user or function_name: user={user}, function_name={function_name}"
+        logger.error(error_msg)
+        return False, error_msg, {}
+    if not isinstance(function_name, str):
+        error_msg = f"Function name is not a string: {function_name}"
+        logger.error(error_msg)
+        return False, error_msg, {}
+    if not isinstance(r_data, dict):
+        error_msg = f"Data is not a dictionary: {r_data}"
+        logger.error(error_msg)
+        return False, error_msg, {}
+
+    try:
+        func, cancel_func = _parse_function(function_name)
+        success, msg, data = cancel_func(intra_api, user, r_data)
+
+        if not success:
+            #handle failure (if failure come from intra api, response contains the error details)
+            logger.error(f"Cancellation failed: '{function_name} {user.login} {r_data}' -> {msg}\n{str(data)}")
+            return False, msg, data
+        logger.info(f"Cancellation succeeded: '{function_name} {user.login} {r_data}' -> {msg}\n{str(data)}")
+        return True, msg, data
+    except Exception as e:
+        logger.error(f"Unexpected error in cancel_jackpot '{function_name} {user.login} {r_data}': {e}")
         return False, str(e), {}

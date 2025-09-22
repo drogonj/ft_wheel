@@ -12,11 +12,13 @@ from ft_wheel.utils import load_wheels, build_wheel_versions
 
 logger = logging.getLogger('backend')
 
-def _require_superuser(request):
-    """Helper to check superuser access"""
-    if not request.user.is_superuser:
-        return HttpResponseForbidden()
-    return None
+def user_can_access_wheels(user):
+    """Check if user can access wheels administration"""
+    return user.is_authenticated and (user.is_admin() or user.is_moderator())
+
+def user_can_modify_wheels(user):
+    """Check if user can modify wheels (create, edit, delete)"""
+    return user.is_authenticated and user.is_admin()
 
 def _get_wheel_file_path(config):
     """Helper to get file path for a wheel config"""
@@ -36,8 +38,9 @@ def _normalize_wheel_name(name):
 @login_required
 @require_GET
 def admin_wheels(request):
-    error = _require_superuser(request)
-    if error: return error
+    """Main wheels administration view"""
+    if not user_can_access_wheels(request.user):
+        return HttpResponseForbidden("Access denied")
 
     data = {}
     for slug, meta in settings.WHEEL_CONFIGS.items():
@@ -57,8 +60,9 @@ def admin_wheels(request):
 @login_required
 @require_http_methods(["GET", "POST"])
 def edit_wheel(request, config: str):
-    error = _require_superuser(request)
-    if error: return error
+    """Edit wheel configuration - view and modify sectors"""
+    if not user_can_access_wheels(request.user):
+        return HttpResponseForbidden("Access denied")
     
     if config not in settings.WHEEL_CONFIGS:
         return HttpResponseBadRequest("Unknown wheel configuration")
@@ -72,9 +76,13 @@ def edit_wheel(request, config: str):
             current_sectors = settings.WHEEL_CONFIGS[config]['sectors']
             return JsonResponse({'file': file_data, 'ordered': current_sectors})
         except Exception as e:
+            logger.error(f"Failed to load wheel {config}: {e}")
             return JsonResponse({'error': str(e)}, status=500)
 
-    # POST: Update wheel
+    # POST: Update wheel (requires admin)
+    if not user_can_modify_wheels(request.user):
+        return HttpResponseForbidden("Modification access denied")
+    
     try:
         payload = json.loads(request.body)
     except Exception:
@@ -137,6 +145,7 @@ def edit_wheel(request, config: str):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(wheel_data, f, indent=2, ensure_ascii=False)
     except Exception as e:
+        logger.error(f"Failed to save wheel {config}: {e}")
         return JsonResponse({'error': f'Failed to write file: {e}'}, status=500)
 
     # Reload and return
@@ -155,8 +164,9 @@ def edit_wheel(request, config: str):
 @login_required
 @require_POST
 def create_wheel(request):
-    error = _require_superuser(request)
-    if error: return error
+    """Create a new wheel configuration"""
+    if not user_can_modify_wheels(request.user):
+        return HttpResponseForbidden("Modification access denied")
 
     try:
         payload = json.loads(request.body)
@@ -184,6 +194,7 @@ def create_wheel(request):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(wheel_data, f, indent=2, ensure_ascii=False)
     except Exception as e:
+        logger.error(f"Failed to create wheel {normalized_name}: {e}")
         return JsonResponse({'error': str(e)}, status=500)
     
     versions = _reload_wheels_and_versions()
@@ -194,8 +205,9 @@ def create_wheel(request):
 @login_required
 @require_POST
 def delete_wheel(request, config: str):
-    error = _require_superuser(request)
-    if error: return error
+    """Delete a wheel configuration"""
+    if not user_can_modify_wheels(request.user):
+        return HttpResponseForbidden("Modification access denied")
     
     if config not in settings.WHEEL_CONFIGS:
         return HttpResponseBadRequest('Unknown wheel')
@@ -206,6 +218,7 @@ def delete_wheel(request, config: str):
         if os.path.exists(file_path):
             os.remove(file_path)
     except Exception as e:
+        logger.error(f"Failed to delete wheel file {config}: {e}")
         return JsonResponse({'error': f'Cannot delete file: {e}'}, status=500)
     
     # Remove from memory and update session if needed
@@ -222,8 +235,9 @@ def delete_wheel(request, config: str):
 @login_required
 @require_GET
 def download_wheel(request, config: str):
-    error = _require_superuser(request)
-    if error: return error
+    """Download wheel configuration as JSON file"""
+    if not user_can_access_wheels(request.user):
+        return HttpResponseForbidden("Access denied")
     
     if config not in settings.WHEEL_CONFIGS:
         return HttpResponseBadRequest('Unknown wheel')
@@ -233,6 +247,7 @@ def download_wheel(request, config: str):
         with open(file_path, 'r', encoding='utf-8') as f:
             data = f.read()
     except Exception as e:
+        logger.error(f"Failed to read wheel file {config}: {e}")
         return JsonResponse({'error': str(e)}, status=500)
     
     response = HttpResponse(data, content_type='application/json')

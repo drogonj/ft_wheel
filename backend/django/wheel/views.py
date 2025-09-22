@@ -87,8 +87,10 @@ def spin_view(request):
             wheel=config_type,
             details=details,
             color=sectors[result]['color'],
+            function_name=sectors[result]['function'],
             r_message=message,
             r_data=data,
+            success=success,
             user=request.user
         )
     except Exception as e:

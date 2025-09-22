@@ -3,6 +3,21 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+# History marks for admin/moderator validation
+class HistoryMark(models.Model):
+    """Represents a validation mark on a history entry"""
+    history = models.ForeignKey('History', on_delete=models.CASCADE, related_name='marks')
+    marked_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='history_marks')
+    marked_at = models.DateTimeField(auto_now_add=True)
+    note = models.CharField(max_length=200, blank=True, help_text="Optional note about the validation")
+    
+    class Meta:
+        unique_together = ['history', 'marked_by']  # One mark per user per history
+        ordering = ['-marked_at']
+    
+    def __str__(self):
+        return f"Mark by {self.marked_by.login} on {self.history.id}"
+
 # History model
 class History(models.Model):
     id = models.AutoField(primary_key=True)
@@ -12,11 +27,34 @@ class History(models.Model):
     color = models.CharField(max_length=20, default='#FFFFFF')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='histories')
 
+    function_name = models.CharField(max_length=100, blank=False, null=False)  # Complete Name of the function executed (ex: 'builtins.default')
     r_message = models.CharField(blank=True, null=True)  # message of intra response
     r_data = models.JSONField(blank=True, null=True)  # data of intra response
+    success = models.BooleanField(default=True, help_text="Whether the jackpot execution was successful")
+    
+    # Admin fields
+    is_cancelled = models.BooleanField(default=False, help_text="Whether this entry has been cancelled")
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    cancelled_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='cancelled_histories')
+    cancellation_reason = models.CharField(max_length=200, blank=True)
 
     def __str__(self):
-        return f"{self.timestamp} - {self.user} - {self.wheel} - {self.details}"
+        status = " [CANCELLED]" if self.is_cancelled else ""
+        return f"{self.timestamp} - {self.user} - {self.wheel} - {self.details}{status}"
+    
+    @property
+    def marks_count(self):
+        """Number of validation marks"""
+        return self.marks.count()
+    
+    @property 
+    def marked_by_users(self):
+        """List of users who marked this entry"""
+        return [mark.marked_by for mark in self.marks.all()]
+    
+    def can_be_cancelled(self):
+        """Check if this history entry can be cancelled"""
+        return not self.is_cancelled and self.r_data is not None and self.success is True
     
     class Meta:
         ordering = ['-timestamp']

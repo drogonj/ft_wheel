@@ -2,80 +2,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ft_wheel - Admin Wheels</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ft_wheel - Wheels Administration</title>
   <link rel="shortcut icon" type="image/png" href="{% static 'images/wheel.png' %}">
-  <link rel="stylesheet" href="{% static 'css/admin_wheels.css' %}">
-  <style>
-    body { font-family: system-ui, Arial, sans-serif; margin:20px; background:#111; color:#eee; }
-    a { color:#4dabf7; text-decoration:none; }
-    a:hover { text-decoration:underline; }
-    h1,h2,h3 { font-weight:600; }
-    .container { max-width:1200px; margin:0 auto; }
-  </style>
+  <link rel="stylesheet" href="{% static 'css/global.css' %}">
+  <link rel="stylesheet" href="{% static 'css/wheels_admin.css' %}">
 </head>
 <body>
-  <div class="container">
-<h1>Wheel Management</h1>
+  <div class="admin-container">
+    <!-- Header Section -->
+    <header class="admin-header">
+      <h1>🎯 Wheels Administration</h1>
+      <nav class="admin-nav">
+        <a href="/adm/history/" class="nav-link btn btn-secondary">📋 History</a>
+        <a href="/adm/wheels/" class="nav-link btn btn-primary active">🎯 Wheels</a>
+        <a href="/" class="nav-link btn btn-secondary">🏠 Home</a>
+        <a href="/logout" class="nav-link btn btn-logout">Logout</a>
+      </nav>
+    </header>
 
-<div class="flex" style="margin-bottom:16px;">
-  <div>
-    <label for="wheel-select">Wheel:</label>
-    <select id="wheel-select"></select>
-  </div>
-  <div class="flex">
-  <input id="new-wheel-url" placeholder="url (e.g. standard)" />
-  <input id="new-wheel-title" placeholder="title (e.g. Standard Mode ⚖️)" />
-  <button id="create-wheel" class="primary">Create</button>
-  <div class="flex" style="margin-top:8px;">
-    <input id="edit-wheel-url" placeholder="url" />
-    <input id="edit-wheel-title" placeholder="title" />
-    <button id="update-wheel-meta">Update Meta</button>
-  </div>
-    <button id="delete-wheel" class="danger">Delete</button>
-  </div>
-  <div class="flex">
-    <button id="add-sector">Add sector</button>
-    <button id="save-sectors" class="primary">Save</button>
-    <button id="download-wheel" type="button">Get json file</button>
-    <span id="status" class="small"></span>
-  </div>
-</div>
+    <!-- Controls Section -->
+    <section class="controls-section">
+      <div class="controls-row">
+        <!-- Wheel Selection -->
+        <div class="control-group">
+          <label for="wheel-select">Current Wheel:</label>
+          <div class="control-inputs">
+            <select id="wheel-select" aria-label="Select wheel configuration">
+              <option value="">Loading...</option>
+            </select>
+          </div>
+        </div>
 
-<table id="sectors-table">
-  <thead>
+        <!-- Wheel Management -->
+        <div class="control-group">
+          <label>Wheel Management:</label>
+          <div class="control-inputs">
+            <input id="new-wheel-url" placeholder="URL (e.g. standard)" aria-label="New wheel URL">
+            <input id="new-wheel-title" placeholder="Title (e.g. Standard Mode ⚖️)" aria-label="New wheel title">
+            <button id="create-wheel" class="btn btn-primary">➕ Create</button>
+            <button id="delete-wheel" class="btn btn-danger">🗑️ Delete</button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="control-group">
+          <label>Actions:</label>
+          <div class="control-inputs">
+            <button id="add-sector" class="btn btn-success">➕ Add Sector</button>
+            <button id="save-sectors" class="btn btn-primary">💾 Save</button>
+            <button id="download-wheel" class="btn btn-secondary">📥 Download</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wheel Metadata Editing -->
+      <div class="controls-row">
+        <div class="control-group">
+          <label>Edit Metadata:</label>
+          <div class="control-inputs">
+            <input id="edit-wheel-url" placeholder="New URL" aria-label="Edit wheel URL">
+            <input id="edit-wheel-title" placeholder="New Title" aria-label="Edit wheel title">
+            <button id="update-wheel-meta" class="btn btn-secondary">✏️ Update Meta</button>
+          </div>
+        </div>
+        
+        <!-- Status Display -->
+        <div class="control-group">
+          <div id="status" class="status-display" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sectors Content -->
+    <section class="sectors-content">
+      <!-- Desktop Table View -->
+      <table class="sectors-table" id="sectors-table">
+        <thead>
+          <tr>
+            <th class="drag-col" title="Drag to reorder">⇅</th>
+            <th>#</th>
+            <th>Label</th>
+            <th>Color</th>
+            <th>Message</th>
+            <th>Function</th>
+            <th>Args (JSON)</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <!-- Mobile Card View -->
+      <div class="sectors-cards" id="sectors-cards">
+        <!-- Dynamic content populated by JavaScript -->
+      </div>
+    </section>
+  </div>
+
+  <!-- Templates -->
+  <template id="row-template">
     <tr>
-      <th class="drag-col" title="Drag to reorder">⇅</th>
-      <th>#</th>
-      <th>Label</th>
-      <th>Color</th>
-      <th>Message</th>
-      <th>Function</th>
-      <th>Args (JSON)</th>
-      <th>Actions</th>
+      <td class="drag-handle" title="Drag to reorder">⋮⋮</td>
+      <td class="idx"></td>
+      <td><input class="label-input" placeholder="Sector label" aria-label="Sector label"></td>
+      <td><input class="color-input" type="color" aria-label="Sector color"></td>
+      <td><input class="message-input" placeholder="Win message" aria-label="Win message"></td>
+      <td><input class="function-input" placeholder="builtins.default" aria-label="Function name"></td>
+      <td><input class="args-input" placeholder='{"amount": 1000}' aria-label="Function arguments JSON"></td>
+      <td class="row-actions">
+        <button class="dup btn btn-secondary" title="Duplicate sector" aria-label="Duplicate">⧉</button>
+        <button class="del btn btn-danger" title="Delete sector" aria-label="Delete">🗑️</button>
+      </td>
     </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  </template>
 
-<template id="row-template">
-  <tr>
-    <td class="drag-handle" title="Drag">⋮⋮</td>
-    <td class="idx"></td>
-    <td><input class="label-input" /></td>
-    <td><input class="color-input" placeholder="#hex"/></td>
-    <td><input class="message-input" /></td>
-    <td><input class="function-input" placeholder="builtins.default" /></td>
-    <td><input class="args-input" placeholder='{"amount": 1000}' /></td>
-    <td class="row-actions">
-      <button class="dup" title="Duplicate">⧉</button>
-      <button class="del danger" title="Delete">X</button>
-    </td>
-  </tr>
-</template>
+  <template id="card-template">
+    <div class="sector-card">
+      <div class="card-header">
+        <div class="card-index"></div>
+        <div class="card-actions">
+          <button class="drag-handle" title="Drag to reorder" aria-label="Drag">⋮⋮</button>
+          <button class="dup btn btn-secondary" title="Duplicate sector" aria-label="Duplicate">⧉</button>
+          <button class="del btn btn-danger" title="Delete sector" aria-label="Delete">🗑️</button>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="field-group">
+          <label>Label</label>
+          <input class="label-input" placeholder="Sector label" aria-label="Sector label">
+        </div>
+        <div class="field-group">
+          <label>Color</label>
+          <div class="color-field">
+            <input class="color-input" type="color" aria-label="Sector color">
+            <div class="color-preview"></div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Message</label>
+          <textarea class="message-input" placeholder="Win message" aria-label="Win message" rows="2"></textarea>
+        </div>
+        <div class="field-group">
+          <label>Function</label>
+          <input class="function-input" placeholder="builtins.default" aria-label="Function name">
+        </div>
+        <div class="field-group">
+          <label>Arguments</label>
+          <textarea class="args-input" placeholder='{"amount": 1000}' aria-label="Function arguments JSON" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+  </template>
 
-<script src="{% static 'js/admin_wheels.js' %}"></script>
-  </div>
+  <script src="{% static 'js/admin_wheels.js' %}"></script>
 </body>
 </html>

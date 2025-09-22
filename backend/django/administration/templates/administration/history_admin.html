@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ft_wheel - History Administration</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/global.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/history_admin.css' %}" />
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>History Administration</h1>
+            <div class="admin-nav">
+                <a href="/" class="btn btn-secondary">← Back to Wheel</a>
+                <a href="/adm/wheels" class="btn btn-secondary">Wheel Admin</a>
+                <a href="/logout" class="btn btn-logout">Logout</a>
+            </div>
+        </header>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <form method="get" class="filters-form">
+                <div class="filter-group">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" name="search" value="{{ search_query }}" placeholder="User, details, message...">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="wheel">Wheel:</label>
+                    <select id="wheel" name="wheel">
+                        <option value="">All Wheels</option>
+                        {% for wheel in available_wheels %}
+                            <option value="{{ wheel }}" {% if wheel_filter == wheel %}selected{% endif %}>{{ wheel }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="status">Status:</label>
+                    <select id="status" name="status">
+                        <option value="">All</option>
+                        <option value="success" {% if status_filter == 'success' %}selected{% endif %}>Success</option>
+                        <option value="error" {% if status_filter == 'error' %}selected{% endif %}>Error</option>
+                        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="marked">Validation:</label>
+                    <select id="marked" name="marked">
+                        <option value="">All</option>
+                        <option value="marked" {% if marked_filter == 'marked' %}selected{% endif %}>Marked</option>
+                        <option value="unmarked" {% if marked_filter == 'unmarked' %}selected{% endif %}>Unmarked</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a href="?" class="btn btn-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="results-summary">
+            <p>Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries</p>
+        </div>
+
+        <!-- History Table -->
+        <div class="history-table-container">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Wheel</th>
+                        <th>Prize</th>
+                        <th>Status</th>
+                        <th>Marks</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for history in page_obj %}
+                    <tr class="history-row {% if history.is_cancelled %}cancelled{% elif not history.success %}error{% endif %}" data-history-id="{{ history.id }}">
+                        <td class="history-id" data-label="ID">{{ history.id }}</td>
+                        <td class="timestamp" data-label="Date" data-utc="{{ history.timestamp|date:'c' }}">{{ history.timestamp|date:"Y-m-d H:i:s" }}</td>
+                        <td class="user" data-label="User">{{ history.user.login }}</td>
+                        <td class="wheel" data-label="Wheel">{{ history.wheel }}</td>
+                        <td class="details" data-label="Prize">
+                            {{ history.details|default:"No details" }}
+                        </td>
+                        <td class="status" data-label="Status">
+                            {% if history.is_cancelled %}
+                                <span class="status-cancelled">CANCELLED</span>
+                                <small>by {{ history.cancelled_by.login }}</small>
+                            {% elif not history.success %}
+                                <span class="status-error">ERROR</span>
+                            {% else %}
+                                <span class="status-success">SUCCESS</span>
+                            {% endif %}
+                        </td>
+                        <td class="marks" data-label="Marks">
+                            <div class="marks-indicator" 
+                                 data-history-id="{{ history.id }}"
+                                 {% if history.marks_count > 0 %}
+                                 title="Click to view marks"
+                                 {% endif %}>
+                                {% if history.marks_count > 0 %}
+                                    <span class="mark-count">{{ history.marks_count }}</span>
+                                    <span class="mark-icon">✓</span>
+                                {% else %}
+                                    <span class="no-marks">—</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="actions" data-label="Actions">
+                            <button class="btn btn-small btn-primary view-details" data-history-id="{{ history.id }}">
+                                View
+                            </button>
+                            <button class="btn btn-small btn-success add-mark" data-history-id="{{ history.id }}">
+                                Mark
+                            </button>
+                            {% if user_can_cancel and history.can_be_cancelled %}
+                            <button class="btn btn-small btn-danger cancel-entry" data-history-id="{{ history.id }}">
+                                Cancel
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="no-results">No history entries found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="pagination-container">
+            <nav class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if wheel_filter %}wheel={{ wheel_filter }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if marked_filter %}marked={{ marked_filter }}&{% endif %}page=1" class="page-link">First</a>
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if wheel_filter %}wheel={{ wheel_filter }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if marked_filter %}marked={{ marked_filter }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-link">Previous</a>
+                {% endif %}
+                
+                <span class="page-info">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                
+                {% if page_obj.has_next %}
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if wheel_filter %}wheel={{ wheel_filter }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if marked_filter %}marked={{ marked_filter }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-link">Next</a>
+                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if wheel_filter %}wheel={{ wheel_filter }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if marked_filter %}marked={{ marked_filter }}&{% endif %}page={{ page_obj.paginator.num_pages }}" class="page-link">Last</a>
+                {% endif %}
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- History Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>History Details</h2>
+                <span class="close" data-modal="detailsModal">&times;</span>
+            </div>
+            <div class="modal-body" id="detailsContent">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Mark Modal -->
+    <div id="markModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Validation Mark</h2>
+                <span class="close" data-modal="markModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="markForm">
+                    <div class="form-group">
+                        <label for="markNote">Note (optional):</label>
+                        <textarea id="markNote" name="note" rows="3" placeholder="Add a note about this validation..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add Mark</button>
+                        <button type="button" class="btn btn-secondary" data-close-modal="markModal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Entry Modal -->
+    <div id="cancelModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cancel History Entry</h2>
+                <span class="close" data-modal="cancelModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="warning">⚠️ This will call the cancel function for this jackpot. This action cannot be undone.</p>
+                <form id="cancelForm">
+                    <div class="form-group">
+                        <label for="cancelReason">Reason for cancellation:</label>
+                        <textarea id="cancelReason" name="reason" rows="3" placeholder="Explain why this entry is being cancelled..." required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-danger">Cancel Entry</button>
+                        <button type="button" class="btn btn-secondary" data-close-modal="cancelModal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marks Tooltip -->
+    <div id="marksTooltip" class="marks-tooltip">
+        <!-- Content loaded dynamically -->
+    </div>
+
+    <script>
+        // Store CSRF token for AJAX requests
+        const csrfToken = '{{ csrf_token }}';
+    </script>
+    <script src="{% static 'js/history_admin.js' %}"></script>
+</body>
+</html>

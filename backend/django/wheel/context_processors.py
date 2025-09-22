@@ -2,7 +2,7 @@ from django.conf import settings
 
 def wheel_list(request):
     """Expose available wheels with slug & title (and version id) to all templates as WHEEL_LIST.
-    Also expose flags about user (superuser / testmode) for JS consumption.
+    Also expose flags about user (role info / testmode) for JS consumption.
     """
     wheels_meta = []
     wheel_store = getattr(settings, 'WHEEL_CONFIGS', {})
@@ -15,12 +15,26 @@ def wheel_list(request):
         })
     # sort by title for consistency
     wheels_meta.sort(key=lambda x: x['title'].lower())
-    # testmode: expose if user is superuser or has attribute test_mode True
+    
     user = getattr(request, 'user', None)
-    is_super = bool(getattr(user, 'is_superuser', False))
+    
+    # Role-based checks
+    is_admin = False
+    is_moderator = False
+    is_super = False  # Keep for Django admin compatibility
+    
+    if user and user.is_authenticated:
+        is_admin = getattr(user, 'role', None) == 'admin'
+        is_moderator = getattr(user, 'role', None) in ['moderator', 'admin']
+        # Django admin compatibility - admin role has superuser privileges
+        is_super = is_admin
+    
     test_mode = bool(getattr(user, 'test_mode', False))
+    
     return {
         'WHEEL_LIST': wheels_meta,
-        'USER_IS_SUPERUSER': is_super,
+        'USER_IS_SUPERUSER': is_super,  # Keep for backward compatibility
+        'USER_IS_ADMIN': is_admin,
+        'USER_IS_MODERATOR': is_moderator,
         'USER_TEST_MODE': test_mode,
     }
