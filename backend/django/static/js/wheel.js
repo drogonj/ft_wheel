@@ -1,5 +1,45 @@
 import { getCookie } from "./utils.js";
 import { init_time_to_spin, counter_distance } from "./counter.js";
+import { showLoadingIndicator, hideLoadingIndicator } from "./menu.js";
+
+// 🔧 Function to reload wheel data dynamically
+window.reloadWheelData = async function() {
+    try {
+        showLoadingIndicator();
+        
+        const response = await fetch('/api/current-wheel-config/');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch wheel config: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const currentMode = data.current_mode;
+        
+        if (!currentMode) {
+            throw new Error('No wheel configuration available');
+        }
+        
+        // Fetch the actual wheel page to get the new sectors
+        const wheelResponse = await fetch(`/?mode=${currentMode}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (wheelResponse.ok) {
+            // For now, we'll do a page reload to ensure everything is synchronized
+            // This is safer than trying to parse HTML and extract sectors
+            window.location.href = `/?mode=${currentMode}&t=${Date.now()}`;
+        } else {
+            throw new Error('Failed to reload wheel data');
+        }
+        
+    } catch (error) {
+        console.error('Error reloading wheel data:', error);
+        hideLoadingIndicator();
+        alert('Failed to reload wheel. Please refresh the page.');
+    }
+};
 
 function adjustScale() {
     const screenWidth = document.documentElement.clientWidth;
@@ -51,7 +91,7 @@ window.animationFrameId = null;
 
 //* Get index of current sector */
 window.getIndex = (ang) => {
-    // Adapter la formule pour qu'elle corresponde à l'orientation des secteurs
+    // Adapt for the orientation of the wheel (starting point)
     return (tot - Math.floor(mod(ang, TAU) / TAU * tot) - 1) % tot;
 };
 
@@ -63,11 +103,11 @@ winSound.volume = 0.5;
 
 function playTickSound() {
     const tickSoundClone = tickSound.cloneNode();
-    tickSoundClone.play().catch(e => console.log("Lecture audio bloquée:", e));
+    tickSoundClone.play().catch(e => console.log("Audio playback blocked:", e));
 }
 function playWinSound() {
     const winSoundClone = winSound.cloneNode();
-    winSoundClone.play().catch(e => console.log("Lecture audio bloquée:", e));
+    winSoundClone.play().catch(e => console.log("Audio playback blocked:", e));
 }
 
 document.addEventListener('wheelConfigChanged', (e) => {
@@ -100,7 +140,7 @@ const showWinPopup = (message) => {
     const messageEl = document.getElementById('win-message');
 
     playWinSound();
-    messageEl.textContent = message || "Vous avez gagné un prix!";
+    messageEl.textContent = message || "You won a prize!";
     popup.style.display = 'flex';
     const closeBtn = document.querySelector('.close-popup');
     const claimBtn = document.getElementById('claim-prize');
@@ -131,7 +171,7 @@ const drawSector = (sector, i) => {
 
     // BORDER
     // ctx.strokeStyle = "#4c4f69";
-    // ctx.lineWidth = 2; // Définir l'épaisseur de la bordure
+    // ctx.lineWidth = 2; // Define the border width
     // ctx.stroke();
 
     // TEXT
@@ -168,22 +208,17 @@ const update = () => {
 };
 
 const spin = (index, duration) => {
-
-    // PROBLÈME ICI: L'index est inversé, mais le reste du code ne tient pas compte de cette inversion
-    // var nindex = tot - index; // Commentons cette ligne qui cause le problème
-
-    // On utilise l'index directement
     const nindex = index; 
 
     // Absolute current angle (without turns)
     oldAng = ang;
     const angAbs = mod(ang, TAU);
 
-    // Absolute new angle - adaptation pour corriger le calcul de l'angle
-    let angNew = arc * (tot - nindex - 1); // Ici on adapte la formule pour l'orientation
+    // Absolute new angle - adaptation to orientation
+    let angNew = arc * (tot - nindex - 1); // Here we adapt the formula for orientation
     
     // (backtrack a bit to not end on the exact edge)
-    angNew += rand(0, arc * 0.7); // On ajoute un peu d'aléatoire dans le secteur, sans risquer de déborder
+    angNew += rand(0, arc * 0.7);
 
     // Fix negative angles
     angNew = mod(angNew, TAU);
@@ -208,7 +243,7 @@ const spin = (index, duration) => {
         cancelAnimationFrame(animationFrameId);
         elSpin.textContent = "Spin";
         elSpin.style.background = "#1b1728";
-        elSpin.classList.remove('disabled'); // Réactive le bouton
+        elSpin.classList.remove('disabled'); // Activate button again
     }, { once: true });
 
     init_time_to_spin();
@@ -229,6 +264,10 @@ if (!window._engineStarted) {
 elSpin.addEventListener("click", async () => {
     if (spinAnimation || elSpin.classList.contains('disabled')) return;
     if (!window.USER_TEST_MODE && counter_distance > 0) return; // In test mode we ignore countdown
+    
+    // Show loading indicator
+    showLoadingIndicator();
+    
     try {
         const response = await fetch(`/spin/`, {
             method: 'POST',
@@ -240,6 +279,8 @@ elSpin.addEventListener("click", async () => {
         });
 
         if (!response.ok) {
+            hideLoadingIndicator();
+            
             if (response.status === 409) {
                 // Outdated wheel configuration
                 try {
@@ -256,6 +297,10 @@ elSpin.addEventListener("click", async () => {
         }
 
         const result = await response.json();
+        
+        // Hide loading indicator after successful response
+        hideLoadingIndicator();
+
         const targetIndex = result.result;
         if (result.wheel_version_id && result.wheel_version_id !== window.CURRENT_WHEEL_VERSION_ID) {
             // Sync local version id (should be same). If different just sync.
@@ -265,10 +310,13 @@ elSpin.addEventListener("click", async () => {
             // REMOVE: engine(); // Don't call engine() here
             spin(targetIndex);
         } else {
-            console.error("Index de secteur invalide:", targetIndex);
+            console.error("Invalid sector index:", targetIndex);
             elSpin.classList.remove('disabled');
         }
     } catch (error) {
+        // Hide loading indicator on catch error
+        hideLoadingIndicator();
+
         console.error('Error during spin:', error);
         elSpin.classList.remove('disabled');
     }

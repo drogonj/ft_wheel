@@ -11,4 +11,5 @@ urlpatterns = [
     path('history/', views.history_view, name='history'),
     path('faq/', views.faq_view, name='faq'),
     path('api/patch-notes/', views.patch_notes_api, name='patch_notes_api'),
+    path('api/current-wheel-config/', views.current_wheel_config_api, name='current_wheel_config_api'),
 ]

@@ -9,16 +9,16 @@
     <div class="side-menu">
         <div class="menu-content">
             <div class="menu-section">
-                <h3 class="menu-section-title">Options de jeu</h3>
+                <h3 class="menu-section-title">Game Options</h3>
                 {% for w in WHEEL_LIST %}
                     <div class="menu-item{% if forloop.first %} active{% endif %}" data-option="{{ w.slug }}">{{ w.title }}</div>
                 {% empty %}
-                    <div class="menu-item">Aucune roue</div>
+                    <div class="menu-item">No wheels available</div>
                 {% endfor %}
             </div>
             <div class="menu-section">
-                <h3 class="menu-section-title">Historique</h3>
-                <a class="menu-item" data-option="history" href="/history">Voir les gains 📈</a>
+                <h3 class="menu-section-title">History</h3>
+                <a class="menu-item" data-option="history" href="/history">View rewards 📈</a>
             </div>
         </div>
     </div>

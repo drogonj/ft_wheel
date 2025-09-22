@@ -12,15 +12,15 @@
 </head>
 <body>
     <div class="popup consent">
-        <h1 class="popup-content">Bienvenue !</h1>
+        <h1 class="popup-content">Welcome!</h1>
         <p class="popup-content">
-            Avant de continuer, sache que la roue peut être dangereuse 🎰 <br><br>   
-            En cliquant sur le bouton ci-dessous, tu acceptes cela à tes risques et périls.<br><br>
-            On t'invite quand meme à jouer le jeu et à t'amuser 🫶
+            Before continuing, know that the wheel can be dangerous 🎰 <br><br>   
+            By clicking the button below, you accept this at your own risk.<br><br>
+            We still invite you to play the game and have fun 🫶
         </p>
         <form class="consent-form popup-footer" method="post" action="{% url 'accept_consent' %}">
             {% csrf_token %}
-            <button type="submit" class="consent-button">OK !</button>
+            <button type="submit" class="consent-button">OK!</button>
         </form>
     </div>
 </body>

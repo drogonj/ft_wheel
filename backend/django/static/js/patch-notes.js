@@ -16,7 +16,7 @@ class PatchNotesManager {
                 this.showPatchNotes(data.current_version, data.versions[data.current_version]);
             }
         } catch (error) {
-            console.error('Erreur lors du chargement des patch notes:', error);
+            console.error('Error while fetching patch notes:', error);
         }
     }
 
@@ -52,7 +52,7 @@ class PatchNotesManager {
                 <div class="patch-notes-body">
                     <p class="patch-notes-date">📅 ${versionData.date}</p>
                     <div class="patch-notes-list">
-                        <h3>✨ Nouveautés :</h3>
+                        <h3>✨ News :</h3>
                         <ul>
                             ${versionData.notes.map(note => `<li>${note}</li>`).join('')}
                         </ul>

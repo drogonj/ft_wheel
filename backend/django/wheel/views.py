@@ -80,8 +80,8 @@ def spin_view(request):
             data = data.args[0]
         elif type(data) is str:
             data = ast.literal_eval(data)
-        else:
-            raise ValueError("Unexpected data type from jackpot handler")
+        elif type(data) is not dict:
+            raise ValueError("Unexpected data type from jackpot handler: %s" % type(data))
 
         History.objects.create(
             wheel=config_type,
@@ -160,3 +160,26 @@ def patch_notes_api(request):
     except Exception as e:
         logger.error(f"Error while reading patch notes: {e}")
         return JsonResponse({'error': 'Server error'}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def current_wheel_config_api(request):
+    """API endpoint to get current wheel configuration"""
+    current_mode = request.session.get('wheel_config_type', 'standard')
+    wheels_store = load_wheels(settings.WHEEL_CONFIGS_DIR)
+    
+    # Check if current mode still exists
+    if current_mode not in wheels_store:
+        # Fallback au premier disponible
+        first = next(iter(wheels_store.keys()), None)
+        if first:
+            request.session['wheel_config_type'] = first
+            current_mode = first
+        else:
+            current_mode = None
+    
+    return JsonResponse({
+        'current_mode': current_mode,
+        'available_modes': list(wheels_store.keys())
+    })

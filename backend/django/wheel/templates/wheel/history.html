@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 {% load static %}
 <head>
     <meta charset="UTF-8">
@@ -17,8 +17,8 @@
     {% include 'wheel/menu.html' %}
 
     <div class="history-buttons">
-        <button id="show-global-history" class="history-button history-selected">Historique global</button>
-        <button id="show-my-history" class="history-button">Mon historique</button>
+        <button id="show-global-history" class="history-button history-selected">Global history</button>
+        <button id="show-my-history" class="history-button">My history</button>
     </div>
 
     <div class="history-container" id="global-history" style="display: flex;">
@@ -27,11 +27,11 @@
                 <div class="history-entry" id="entry-{{ entry.id }}" data-color="{{ entry.color }}">
                     <p id="date"><strong>Date:</strong> <span class="timestamp" data-utc="{{ entry.timestamp|date:'c' }}">{{ entry.timestamp }}</span></p>
                     <a class="history-user-p" href="https://profile.intra.42.fr/users/{{ entry.user.login }}"><strong>{{ entry.user.login }}</strong></a>
-                    <p id="gain"><strong>Gain:</strong> {{ entry.details|upper }}</p>
+                    <p id="gain"><strong>Reward:</strong> {{ entry.details|upper }}</p>
                 </div>
             {% endfor %}
         {% else %}
-                <p class="nohistory">Aucune entrée d'historique trouvée.</p>
+                <p class="nohistory">No history entries found.</p>
         {% endif %}
     </div>
 
@@ -41,11 +41,11 @@
                 <div class="history-entry" id="entry-{{ entry.id }}" data-color="{{ entry.color }}">
                     <p id="date"><strong>Date:</strong> <span class="timestamp" data-utc="{{ entry.timestamp|date:'c' }}">{{ entry.timestamp }}</span></p>
                     <p><strong>Mode:</strong> {{entry.wheel|upper }}</p>
-                    <p id="gain"><strong>Gain:</strong> {{ entry.details|upper }}</p>
+                    <p id="gain"><strong>Reward:</strong> {{ entry.details|upper }}</p>
                 </div>
             {% endfor %}
         {% else %}
-                <p class="nohistory">Aucune entrée d'historique trouvée.</p>
+                <p class="nohistory">No history entries found.</p>
         {% endif %}
     </div>
 
