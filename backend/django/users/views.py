@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 import logging, requests, json
 from django.db import IntegrityError
-from luckywheel.utils import docker_secret
+from ft_wheel.utils import docker_secret
 from .models import OauthStateManager, OauthState
 
 User = get_user_model()

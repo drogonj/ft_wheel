@@ -3,7 +3,7 @@ from django.core.management.base import CommandError
 from django.contrib.auth import get_user_model
 
 # Django setup
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'luckywheel.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ft_wheel.settings')
 django.setup()
 User = get_user_model()
 

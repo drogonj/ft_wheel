@@ -10,7 +10,7 @@ from datetime import timedelta
 import random, logging, json, os, ast
 
 from .models import History
-from luckywheel.utils import load_wheels, build_wheel_versions
+from ft_wheel.utils import load_wheels, build_wheel_versions
 from api.jackpots_handler import handle_jackpots
 
 logger = logging.getLogger('backend')

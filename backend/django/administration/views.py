@@ -8,7 +8,7 @@ from django.views.decorators.http import require_GET, require_POST
 import random, logging, json
 import os
 
-from luckywheel.utils import load_wheels, build_wheel_versions
+from ft_wheel.utils import load_wheels, build_wheel_versions
 
 logger = logging.getLogger('backend')
 
