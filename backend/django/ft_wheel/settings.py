@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'users.middleware.ConsentMiddleware',
+    'users.middleware.MaintenanceMiddleware',
 ]
 
 ROOT_URLCONF = 'ft_wheel.urls'

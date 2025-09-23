@@ -7,6 +7,7 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/global.css' %}" />
     <link rel="stylesheet" href="{% static 'css/history_admin.css' %}" />
+    <link rel="icon" type="image/png" href="{% static 'images/wheel.png' %}">
 </head>
 <body>
     <div class="admin-container">
@@ -14,6 +15,7 @@
             <h1>History Administration</h1>
             <div class="admin-nav">
                 <a href="/" class="btn btn-secondary">← Back to Wheel</a>
+                <a href="/adm/control-panel" class="btn btn-secondary">Control Panel</a>
                 <a href="/adm/wheels" class="btn btn-secondary">Wheel Admin</a>
                 <a href="/logout" class="btn btn-logout">Logout</a>
             </div>

@@ -9,5 +9,4 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('consent/', views.consent_view, name='consent'),
     path('accept_consent/', views.accept_consent_view, name='accept_consent'),
-    path('not_authorized/', views.not_authorized_view, name='not_authorized'),
 ]

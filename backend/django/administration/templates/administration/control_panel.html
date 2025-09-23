@@ -1,0 +1,213 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ft_wheel - Control Panel</title>
+    <link rel="stylesheet" href="{% static 'css/global.css' %}">
+    <link rel="stylesheet" href="{% static 'css/control_panel.css' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/wheel.png' %}">
+</head>
+<body>
+    <div class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-left">
+                <a href="/" class="navbar-brand">
+                    <img src="{% static 'images/wheel.png' %}" alt="ft_wheel Logo" class="navbar-logo">
+                    <span>ft_wheel - Control Panel</span>
+                </a>
+            </div>
+            <div class="navbar-right">
+                <div class="user-info">
+                    <span class="user-name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+                    <span class="user-role">({{ request.user.get_role_display }})</span>
+                </div>
+                <a href="/" class="btn btn-secondary">Home</a>
+                <a href="/adm/django-admin" class="btn btn-secondary">Django</a>
+                <a href="/adm/history" class="btn btn-secondary">History</a>
+                <a href="/adm/wheels" class="btn btn-secondary">Wheels</a>
+                <a href="/logout" class="btn btn-secondary">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Control Panel</h1>
+            <p>Manage site-wide settings and monitor system status</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.total_users }}</div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🟢</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.active_users_today }}</div>
+                    <div class="stat-label">Active Today</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.total_spins_today }}</div>
+                    <div class="stat-label">Spins Today</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ stats.error_spins_today }}</div>
+                    <div class="stat-label">Errors Today</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Settings -->
+        <div class="settings-grid">
+            <!-- Maintenance Mode -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h2>🔧 Maintenance Mode</h2>
+                    <div class="status-indicator {% if settings.maintenance_mode %}status-enabled{% else %}status-disabled{% endif %}">
+                        {% if settings.maintenance_mode %}ENABLED{% else %}DISABLED{% endif %}
+                    </div>
+                </div>
+                <div class="settings-content">
+                    <p>When enabled, all users except admins will see a maintenance page.</p>
+                    {% if can_modify %}
+                    <div class="form-group">
+                        <label for="maintenance-message">Maintenance Message:</label>
+                        <textarea id="maintenance-message" rows="3" placeholder="Enter maintenance message...">{{ settings.maintenance_message }}</textarea>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="toggleMaintenance(true)">Enable Maintenance</button>
+                        <button class="btn btn-secondary" onclick="toggleMaintenance(false)">Disable Maintenance</button>
+                    </div>
+                    {% else %}
+                    <p class="permission-notice">You need admin permissions to modify this setting.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Jackpot Settings -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h2>💰 Jackpot Cooldown</h2>
+                    <div class="current-value">{{ stats.jackpot_cooldown_hours }}h</div>
+                </div>
+                <div class="settings-content">
+                    <p>Time users must wait between jackpot attempts.</p>
+                    {% if can_modify %}
+                    <div class="form-group">
+                        <label for="cooldown-hours">Cooldown (hours):</label>
+                        <input type="number" id="cooldown-hours" min="1" max="168" value="{{ stats.jackpot_cooldown_hours }}">
+                        <small>Between 1 hour and 1 week (168 hours)</small>
+                    </div>
+                    <button class="btn btn-primary" onclick="updateJackpotCooldown()">Update Cooldown</button>
+                    {% else %}
+                    <p class="permission-notice">You need admin permissions to modify this setting.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h2>📊 System Status</h2>
+                    <div class="status-indicator status-enabled">ONLINE</div>
+                </div>
+                <div class="settings-content">
+                    <div class="system-stats">
+                        <div class="system-stat">
+                            <span class="stat-label">Active Users (Week):</span>
+                            <span class="stat-value">{{ stats.active_users_week }}</span>
+                        </div>
+                        <div class="system-stat">
+                            <span class="stat-label">Total Spins (Week):</span>
+                            <span class="stat-value">{{ stats.total_spins_week }}</span>
+                        </div>
+                        <div class="system-stat">
+                            <span class="stat-label">Last Updated:</span>
+                            <span class="stat-value" id="last-updated">Just now</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="refreshStats()">Refresh Stats</button>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h2>⚡ Quick Actions</h2>
+                </div>
+                <div class="settings-content">
+                    <div class="quick-actions">
+                        <a href="/adm/history" class="btn btn-outline">View History</a>
+                        <a href="/adm/wheels" class="btn btn-outline">Manage Wheels</a>
+                        <button class="btn btn-outline" onclick="exportLogs()">Export Logs</button>
+                        <button class="btn btn-outline" onclick="clearCache()">Clear Cache</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        {% if recent_users or recent_errors %}
+        <div class="activity-section">
+            <h2>Recent Activity</h2>
+            <div class="activity-grid">
+                {% if recent_users %}
+                <div class="activity-card">
+                    <h3>👥 Recent Users</h3>
+                    <div class="activity-list">
+                        {% for user in recent_users %}
+                        <div class="activity-item">
+                            <div class="activity-avatar">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
+                            <div class="activity-content">
+                                <div class="activity-name">{{ user.first_name }} {{ user.last_name }}</div>
+                                <div class="activity-time">{{ user.last_login|timesince }} ago</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if recent_errors %}
+                <div class="activity-card">
+                    <h3>⚠️ Recent Errors</h3>
+                    <div class="activity-list">
+                        {% for error in recent_errors %}
+                        <div class="activity-item error-item">
+                            <div class="activity-content">
+                                <div class="activity-name">{{ error.user.first_name }} {{ error.user.last_name }}</div>
+                                <div class="activity-time">{{ error.timestamp|timesince }} ago</div>
+                                <div class="activity-details">Failed spin attempt</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing...</div>
+    </div>
+
+    <script src="{% static 'js/control_panel.js' %}"></script>
+</body>
+</html>

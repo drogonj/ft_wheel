@@ -141,9 +141,3 @@ def accept_consent_view(request):
 	else:
 		return HttpResponseBadRequest()
 	
-
-
-@require_http_methods(["GET"])
-def not_authorized_view(request):
-	# This view is used to display a message when the user is not authorized
-	return render(request, 'users/not_authorized.html', status=403)

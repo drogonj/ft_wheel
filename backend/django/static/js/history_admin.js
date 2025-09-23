@@ -22,10 +22,39 @@ function convertTimestampsToLocal() {
     document.querySelectorAll('.timestamp').forEach(function(el) {
         const utc = el.dataset.utc;
         if (utc) {
-            const local = new Date(utc).toLocaleString();
+            const local = formatTimestampToLocal(utc);
             el.textContent = local;
         }
     });
+}
+
+// Utility function to format timestamp to local time
+function formatTimestampToLocal(timestamp) {
+    try {
+        // Handle both ISO strings and regular timestamp formats
+        let date;
+        if (typeof timestamp === 'string') {
+            // If it's an ISO string, ensure it has the Z suffix for UTC
+            if (timestamp.includes('T') && !timestamp.includes('Z') && !timestamp.includes('+')) {
+                timestamp += 'Z';
+            }
+        }
+        date = new Date(timestamp);
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+            console.error('Invalid timestamp:', timestamp);
+            return timestamp; // Return original if can't parse
+        }
+        
+        // Debug log
+        console.log('Converting timestamp:', timestamp, '→', date.toLocaleString());
+        
+        return date.toLocaleString();
+    } catch (error) {
+        console.error('Error formatting timestamp:', error, timestamp);
+        return timestamp;
+    }
 }
 
 // Modal management
@@ -213,8 +242,8 @@ function displayHistoryDetails(data, highlightSection = null) {
     }
     
     // Convert timestamps to local time
-    const localTimestamp = new Date(data.timestamp).toLocaleString();
-    const localCancelledAt = data.cancelled_at ? new Date(data.cancelled_at).toLocaleString() : null;
+    const localTimestamp = formatTimestampToLocal(data.timestamp);
+    const localCancelledAt = data.cancelled_at ? formatTimestampToLocal(data.cancelled_at) : null;
     
     let html = `
         <div class="detail-group">
@@ -224,7 +253,7 @@ function displayHistoryDetails(data, highlightSection = null) {
                 <strong>Timestamp:</strong> ${localTimestamp}<br>
                 <strong>User:</strong> ${data.user}<br>
                 <strong>Wheel:</strong> ${data.wheel}<br>
-                <strong>Prize:</strong> <span style="padding: 2px 6px; border-radius: 3px; color: #000;">${data.details || 'No details'}</span><br>
+                <strong>Prize:</strong> <span>${data.details || 'No details'}</span><br>
                 <strong>Function:</strong> ${data.function_name || 'Unknown'}
             </div>
         </div>
@@ -258,7 +287,7 @@ function displayHistoryDetails(data, highlightSection = null) {
             <h4>Validation Marks (${data.marks_count})</h4>
             <div class="detail-value">
                 ${data.marks.length > 0 ? data.marks.map(mark => {
-                    const localMarkTime = new Date(mark.marked_at).toLocaleString();
+                    const localMarkTime = formatTimestampToLocal(mark.marked_at);
                     return `
                     <div class="mark-item">
                         <strong>${mark.user}</strong> (${mark.role}) - ${localMarkTime}
@@ -396,7 +425,7 @@ async function showMarksTooltip(event, historyId) {
         
         if (data.marks.length > 0) {
             const marksHtml = data.marks.map(mark => {
-                const localMarkTime = new Date(mark.marked_at).toLocaleString();
+                const localMarkTime = formatTimestampToLocal(mark.marked_at);
                 return `
                 <div class="tooltip-mark">
                     <div class="tooltip-user">${mark.user}</div>

@@ -3,8 +3,15 @@ from django.conf.urls.static import static
 from django.conf import settings
 from . import views
 from . import history_views
+from . import control_panel_views
 
 urlpatterns = [
+    # Control panel (admin and moderator access)
+    path('adm/control-panel/', control_panel_views.control_panel_view, name='control_panel'),
+    path('adm/control-panel/maintenance/toggle/', control_panel_views.toggle_maintenance_api, name='toggle_maintenance_api'),
+    path('adm/control-panel/jackpot-cooldown/', control_panel_views.update_jackpot_cooldown_api, name='update_jackpot_cooldown_api'),
+    path('adm/control-panel/settings/', control_panel_views.site_settings_api, name='site_settings_api'),
+    
     # Admin wheel management (superusers only)
     path('adm/wheels/', views.admin_wheels, name='admin_wheels'),
     path('adm/wheels/create/', views.create_wheel, name='create_wheel'),

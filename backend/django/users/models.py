@@ -3,6 +3,7 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 import secrets, base64
+from administration.models import SiteSettings
 
 # Create your models here.
 class AccountManager(BaseUserManager):
@@ -91,14 +92,24 @@ class Account(AbstractBaseUser):
         return ['wheel', 'users'].__contains__(app_label)
     
     def time_to_spin(self):
+        # Get cooldown from site settings
+        try:
+            settings = SiteSettings.objects.get(pk=1)
+            cooldown_seconds = settings.jackpot_cooldown
+        except (ImportError, SiteSettings.DoesNotExist):
+            # Fallback to 24 hours if settings not available
+            cooldown_seconds = 86400
+        
+        cooldown_delta = timedelta(seconds=cooldown_seconds)
+        
         if not self.last_spin:
             time_to_spin = timedelta(0)
         else:
             time_since_last_spin = timezone.now() - self.last_spin
-            if time_since_last_spin >= timedelta(days=1):
+            if time_since_last_spin >= cooldown_delta:
                 time_to_spin = timedelta(0)
             else:
-                time_to_spin = timedelta(days=1) - time_since_last_spin
+                time_to_spin = cooldown_delta - time_since_last_spin
         
         return time_to_spin
     
