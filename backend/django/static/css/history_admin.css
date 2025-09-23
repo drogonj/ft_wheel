@@ -1,11 +1,11 @@
 /* History Administration CSS - Fully Responsive */
 
 .admin-container {
-    max-width: 87.5rem; /* 1400px */
+    max-width: 95vw;
     margin: 0 auto;
     padding: 1.25rem; /* 20px */
     font-family: 'Arial', sans-serif;
-    background-color: #f5f7fa;
+    background-color: #f5f7fafa;
     min-height: 95vh;
     border-radius: 25px;
 }
@@ -267,7 +267,7 @@
 
 .timestamp {
     font-family: monospace;
-    font-size: 0.75rem; /* 12px */
+    font-size: 0.5rem; /* 12px */
     color: #7f8c8d;
     white-space: nowrap;
 }
@@ -332,7 +332,7 @@
     color: white;
     padding: 2px 6px;
     border-radius: 12px;
-    font-size: 11px;
+    font-size: 0.5rem;
     font-weight: bold;
     margin-right: 4px;
 }
@@ -438,7 +438,7 @@
 }
 
 .close {
-    font-size: 1.75rem; /* 28px */
+    font-size: 0.75rem; /* 28px */
     font-weight: bold;
     cursor: pointer;
     color: #7f8c8d;

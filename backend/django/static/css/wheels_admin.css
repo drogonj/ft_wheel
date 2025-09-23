@@ -1,22 +1,12 @@
 /* Wheels Administration CSS - Following history_admin.css theme */
 
-/* Override global.css body for admin pages */
-body {
-    height: auto !important;
-    display: block !important;
-    justify-content: unset !important;
-    align-items: unset !important;
-    margin: 0 !important;
-    background: #f5f7fa !important;
-    position: static !important;
-    overflow: auto !important;
-    font-family: 'Arial', sans-serif !important;
-    min-height: 100vh !important;
-}
-
 html {
     overflow: auto !important;
     height: auto !important;
+}
+
+body {
+    overflow-y: scroll;
 }
 
 body::before {
@@ -25,10 +15,12 @@ body::before {
 
 .admin-container {
     max-width: 87.5rem; /* 1400px */
+    overflow-y: scroll;
+    height: 95%;
     margin: 0 auto;
     padding: 1.25rem; /* 20px */
     font-family: 'Arial', sans-serif;
-    background-color: #f5f7fa;
+    background-color: #ffffff52;
     min-height: 95vh;
     border-radius: 25px;
 }
@@ -402,13 +394,6 @@ button {
 
 /* Responsive Breakpoints */
 @media (max-width: 67.99rem) {
-    .admin-container {
-        padding: 1rem;
-        border-radius: 15px;
-        min-height: 100vh;
-        margin: 0;
-        border-radius: 0;
-    }
     
     .admin-header {
         margin-bottom: 1rem;
@@ -466,15 +451,6 @@ button {
         overflow-x: hidden !important;
         height: auto !important;
         min-height: 100vh !important;
-    }
-    
-    .admin-container {
-        min-height: 100vh;
-        padding: 0.75rem;
-        margin: 0;
-        border-radius: 0;
-        width: 100%;
-        max-width: none;
     }
     
     .admin-header {
@@ -631,9 +607,6 @@ button {
 
 /* High Contrast Support */
 @media (prefers-contrast: high) {
-    .admin-container {
-        background-color: #ffffff;
-    }
     
     .sectors-table th {
         background-color: #000000;

@@ -99,14 +99,6 @@ def edit_wheel(request, config: str):
             if not label:
                 continue
                 
-            # If this label already exists, we could increment a counter
-            # but for simplicity, we'll use unique keys
-            base_label = label
-            counter = 1
-            while label in jackpots_dict:
-                label = f"{base_label}_{counter}"
-                counter += 1
-                
             jackpots_dict[label] = {
                 'color': sector.get('color', '#FFFFFF'),
                 'message': sector.get('message', 'You won... something?'),
