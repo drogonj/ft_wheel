@@ -268,7 +268,7 @@ function duplicateSector(index) {
     // Clone the sector data
     const originalSector = sectors[index];
     const clonedSector = {
-      label: originalSector.label + ' (copy)',
+      label: originalSector.label,
       color: originalSector.color,
       message: originalSector.message,
       function: originalSector.function,

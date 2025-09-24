@@ -90,24 +90,45 @@ def edit_wheel(request, config: str):
 
     # Determine what format we're receiving and convert appropriately
     if 'sectors' in payload and isinstance(payload['sectors'], list):
-        # Convert sectors list to jackpots format for file storage
         sectors_list = payload['sectors']
-        jackpots_dict = {}
         
-        for sector in sectors_list:
-            label = sector.get('label', '').strip()
-            if not label:
-                continue
-                
-            jackpots_dict[label] = {
-                'color': sector.get('color', '#FFFFFF'),
-                'message': sector.get('message', 'You won... something?'),
-                'function': sector.get('function', 'builtins.default'),
-                'args': sector.get('args', {}),
-                'number': 1  # Each sector appears once
-            }
+        # Check if there are duplicate labels (to determine storage format)
+        labels = [sector.get('label', '').strip() for sector in sectors_list if sector.get('label', '').strip()]
+        has_duplicates = len(labels) != len(set(labels))
         
-        wheel_data = {'jackpots': jackpots_dict}
+        if has_duplicates:
+            # Use sequence format to preserve all duplicates exactly
+            sequence_list = []
+            for sector in sectors_list:
+                label = sector.get('label', '').strip()
+                if not label:
+                    continue
+                sequence_list.append({
+                    'label': label,
+                    'color': sector.get('color', '#FFFFFF'),
+                    'message': sector.get('message', 'You won... something?'),
+                    'function': sector.get('function', 'builtins.default'),
+                    'args': sector.get('args', {})
+                })
+            
+            wheel_data = {'sequence': sequence_list}
+        else:
+            # No duplicates, use jackpots format (more efficient)
+            jackpots_dict = {}
+            for sector in sectors_list:
+                label = sector.get('label', '').strip()
+                if not label:
+                    continue
+                    
+                jackpots_dict[label] = {
+                    'color': sector.get('color', '#FFFFFF'),
+                    'message': sector.get('message', 'You won... something?'),
+                    'function': sector.get('function', 'builtins.default'),
+                    'args': sector.get('args', {}),
+                    'number': 1
+                }
+            
+            wheel_data = {'jackpots': jackpots_dict}
         
     elif 'sequence' in payload and isinstance(payload['sequence'], list):
         wheel_data = {'sequence': payload['sequence']}

@@ -14,9 +14,11 @@ function startTimer() {
     var now = new Date().getTime();
     counter_distance = countDownDate - now;
 
-    var hours = Math.floor((counter_distance % hoursMult1) / hoursMult2);
+    var hours = Math.floor(counter_distance / hoursMult2);
     var minutes = Math.floor((counter_distance % hoursMult2) / 60000);
     var seconds = Math.floor((counter_distance % 60000) / 1000);
+
+    console.log(counter_distance, hoursMult2, hours)
 
     document.getElementById("counter").innerHTML = hours + "h "
       + minutes + "m " + seconds + "s ";
@@ -53,13 +55,35 @@ export async function init_time_to_spin()  {
 
     const result = await response.json();
 
-    const timeParts = result.timeToSpin.split(":");
-    const hours = parseInt(timeParts[0], 10);
-    const minutes = parseInt(timeParts[1], 10);
-    const seconds = parseFloat(timeParts[2]);
+    // Parse time format that can be "HH:MM:SS" or "X days, HH:MM:SS"
+    let totalHours = 0;
+    let minutes = 0;
+    let seconds = 0;
+
+    const timeStr = result.timeToSpin;
+    if (timeStr.includes("days,") || timeStr.includes("day,")) {
+      // Format: "X days, HH:MM:SS"
+      const parts = timeStr.split(", ");
+      const daysPart = parts[0]; // "6 days"
+      const timePart = parts[1]; // "23:31:46.092474"
+      
+      const days = parseInt(daysPart.split(" ")[0], 10);
+      const timeParts = timePart.split(":");
+      const hours = parseInt(timeParts[0], 10);
+      minutes = parseInt(timeParts[1], 10);
+      seconds = parseFloat(timeParts[2]);
+      
+      totalHours = (days * 24) + hours;
+    } else {
+      // Format: "HH:MM:SS"
+      const timeParts = timeStr.split(":");
+      totalHours = parseInt(timeParts[0], 10);
+      minutes = parseInt(timeParts[1], 10);
+      seconds = parseFloat(timeParts[2]);
+    }
 
     const now = new Date().getTime();
-    const futureTime = now + (hours * hoursMult2) + (minutes * 60000) + (seconds * 1000);
+    const futureTime = now + (totalHours * hoursMult2) + (minutes * 60000) + (seconds * 1000);
 
     countDownDate = futureTime;
 
