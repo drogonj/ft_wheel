@@ -111,7 +111,7 @@ function validateSectors() {
 // Fetch available wheels and populate the select dropdown
 async function fetchWheels(){
   try {
-    const r = await fetch('/adm/wheels/', { headers: { 'Accept':'application/json' } });
+    const r = await fetch('/adm/wheels/', { headers: { 'Accept':'application/json' }, cache: 'no-store' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
 
@@ -352,7 +352,7 @@ async function loadWheel(name) {
   setStatus('Loading wheel...');
   
   try {
-    const r = await fetch(`/adm/wheels/${name}/`);
+    const r = await fetch(`/adm/wheels/${name}/`, { cache: 'no-store' });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const j = await r.json();
 
@@ -599,12 +599,11 @@ document.getElementById('upload-file').addEventListener('change', async (e) => {
     const j = await r.json();
     setStatus(`Uploaded wheel '${j.url}'`, 'success');
 
-    await fetchWheels();
+    // Set as current before refreshing list so the refresh loads the new wheel
     if (j.url) {
       currentWheel = j.url;
-      wheelSelect.value = j.url;
-      await loadWheel(j.url);
     }
+    await fetchWheels();
   } catch (error) {
     console.error('Upload error:', error);
     setStatus(`Upload error: ${error.message}`, 'error');

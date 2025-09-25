@@ -1,7 +1,7 @@
 from django.urls import path, re_path
 from django.conf.urls.static import static
 from django.conf import settings
-from . import views
+from . import wheels_views
 from . import history_views
 from . import control_panel_views
 
@@ -13,13 +13,13 @@ urlpatterns = [
     path('adm/control-panel/settings/', control_panel_views.site_settings_api, name='site_settings_api'),
     
     # Admin wheel management (superusers only)
-    path('adm/wheels/', views.admin_wheels, name='admin_wheels'),
-    path('adm/wheels/create/', views.create_wheel, name='create_wheel'),
-    path('adm/wheels/upload/', views.upload_wheel, name='upload_wheel'),
-    path('adm/wheels/<str:config>/delete/', views.delete_wheel, name='delete_wheel'),
-    path('adm/wheels/<str:config>/download/', views.download_wheel, name='download_wheel'),
-    path('adm/wheels/<str:config>/', views.edit_wheel, name='edit_wheel'),
-    
+    path('adm/wheels/', wheels_views.admin_wheels, name='admin_wheels'),
+    path('adm/wheels/create/', wheels_views.create_wheel, name='create_wheel'),
+    path('adm/wheels/upload/', wheels_views.upload_wheel, name='upload_wheel'),
+    path('adm/wheels/<str:config>/delete/', wheels_views.delete_wheel, name='delete_wheel'),
+    path('adm/wheels/<str:config>/download/', wheels_views.download_wheel, name='download_wheel'),
+    path('adm/wheels/<str:config>/', wheels_views.edit_wheel, name='edit_wheel'),
+
     # Admin history management (admin and moderator access)
     path('adm/history/', history_views.history_admin_view, name='history_admin'),
     path('adm/history/<int:history_id>/details/', history_views.history_detail_api, name='history_detail_api'),

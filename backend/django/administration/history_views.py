@@ -8,10 +8,9 @@ from django.utils import timezone
 from django.db.models import Q
 from wheel.models import History, HistoryMark
 from api.jackpots_handler import cancel_jackpot
+from .admin_logging import logger as admin_logger
 import json
-import logging
 
-logger = logging.getLogger(__name__)
 
 def user_can_access_history(user):
     """Check if user can access history administration"""
@@ -106,6 +105,9 @@ def add_history_mark(request, history_id):
             mark.marked_at = timezone.now()
             mark.save()
         
+        action = 'created' if created else 'updated'
+        admin_logger.info(f"history_mark {action} by={request.user.login} history_id={history_id} note_len={len(note)}")
+        
         # Return updated mark information
         marks_data = []
         for mark in history.marks.all():
@@ -124,7 +126,7 @@ def add_history_mark(request, history_id):
         })
         
     except Exception as e:
-        logger.error(f"Error adding mark to history {history_id}: {e}")
+        admin_logger.error(f"history_mark error by={request.user.login} history_id={history_id} err={e}")
         return JsonResponse({'error': 'Failed to add mark'}, status=500)
 
 
@@ -157,7 +159,7 @@ def cancel_history_entry(request, history_id):
             history.cancellation_reason = reason
             history.save()
             
-            logger.info(f"History entry {history_id} cancelled by {request.user.login}: {reason}")
+            admin_logger.info(f"history_cancel success by={request.user.login} history_id={history_id} function={history.function_name} reason={reason}")
             
             return JsonResponse({
                 'success': True,
@@ -165,11 +167,11 @@ def cancel_history_entry(request, history_id):
                 'cancel_data': cancel_data
             })
         else:
-            logger.error(f"Failed to cancel history {history_id}: {message}")
+            admin_logger.error(f"history_cancel failed by={request.user.login} history_id={history_id} function={history.function_name} msg={message}")
             return JsonResponse({'error': f'Cancellation failed: {message}'}, status=400)
             
     except Exception as e:
-        logger.error(f"Error cancelling history {history_id}: {e}")
+        admin_logger.error(f"history_cancel error by={request.user.login} history_id={history_id} err={e}")
         return JsonResponse({'error': 'Failed to cancel history entry'}, status=500)
 
 

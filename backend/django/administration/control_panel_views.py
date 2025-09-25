@@ -1,19 +1,18 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods, require_POST
 from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import datetime, timedelta
 import json
-import logging
+from .admin_logging import logger as admin_logger
 
 from users.models import Account
 from wheel.models import History
 from .models import SiteSettings
 
-logger = logging.getLogger(__name__)
 
 def user_can_access_control_panel(user):
     """Check if user can access control panel"""
@@ -35,8 +34,6 @@ def control_panel_view(request):
     
     # Get or create site settings
     settings, created = SiteSettings.objects.get_or_create(pk=1)
-    if created:
-        logger.info("Created initial SiteSettings instance")
     
     # Calculate statistics
     today = timezone.now().date()
@@ -64,7 +61,7 @@ def control_panel_view(request):
             'jackpot_cooldown_hours': settings.jackpot_cooldown // 3600,
         }
     except Exception as e:
-        logger.error(f"Error calculating stats: {e}")
+        admin_logger.error(f"Error calculating stats: {e}")
         stats = {
             'total_users': 0,
             'active_users_today': 0,
@@ -86,7 +83,7 @@ def control_panel_view(request):
             timestamp__gte=week_ago
         ).order_by('-timestamp')[:5]
     except Exception as e:
-        logger.error(f"Error getting recent activity: {e}")
+        admin_logger.error(f"Error getting recent activity: {e}")
         recent_users = []
         recent_errors = []
     
@@ -100,8 +97,9 @@ def control_panel_view(request):
     
     return render(request, 'administration/control_panel.html', context)
 
+
 @login_required
-@csrf_exempt
+@csrf_protect
 @require_POST
 def toggle_maintenance_api(request):
     """Toggle maintenance mode via API"""
@@ -120,8 +118,8 @@ def toggle_maintenance_api(request):
         settings.maintenance_mode = enabled
         settings.maintenance_message = message
         settings.save()
-        
-        logger.info(f"Maintenance mode {'enabled' if enabled else 'disabled'} by {request.user.login}")
+        # business log
+        admin_logger.info(f"maintenance_toggle by={request.user.login} enabled={enabled}")
         
         return JsonResponse({
             'success': True,
@@ -130,13 +128,15 @@ def toggle_maintenance_api(request):
         })
         
     except json.JSONDecodeError:
+        admin_logger.error(f"maintenance_toggle_error by={request.user.login} error=Invalid JSON")
         return JsonResponse({'success': False, 'error': 'Invalid JSON'}, status=400)
     except Exception as e:
-        logger.error(f"Error toggling maintenance mode: {e}")
+        admin_logger.error(f"maintenance_toggle_error by={request.user.login} error={str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+
 @login_required
-@csrf_exempt
+@csrf_protect
 @require_POST
 def update_jackpot_cooldown_api(request):
     """Update jackpot cooldown setting"""
@@ -153,8 +153,8 @@ def update_jackpot_cooldown_api(request):
         settings, created = SiteSettings.objects.get_or_create(pk=1)
         settings.jackpot_cooldown = hours * 3600  # Convert to seconds
         settings.save()
-        
-        logger.info(f"Jackpot cooldown updated to {hours} hours by {request.user.login}")
+        # business log
+        admin_logger.info(f"jackpot_cooldown_update by={request.user.login} hours={hours}")
         
         return JsonResponse({
             'success': True,
@@ -163,11 +163,14 @@ def update_jackpot_cooldown_api(request):
         })
         
     except (json.JSONDecodeError, ValueError):
+        admin_logger.error(f"jackpot_cooldown_update_error by={request.user.login} error=Invalid data")
         return JsonResponse({'success': False, 'error': 'Invalid data'}, status=400)
     except Exception as e:
-        logger.error(f"Error updating jackpot cooldown: {e}")
+        admin_logger.error(f"jackpot_cooldown_update_error by={request.user.login} error={str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+
+@require_http_methods(["GET"])
 @login_required
 def site_settings_api(request):
     """Get current site settings as JSON"""
@@ -188,5 +191,5 @@ def site_settings_api(request):
         })
         
     except Exception as e:
-        logger.error(f"Error getting site settings: {e}")
+        admin_logger.error(f"Error getting site settings: {e}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

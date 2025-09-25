@@ -3,11 +3,10 @@ services:
     container_name: backend
     build: backend
     networks:
-      - ngx_network
-      - pg_network
+      - pg-network
     volumes:
-      - ft_wheel_logs:/var/log/ft_wheel
-      - wheel_configs:/backend/django/data/wheel_configs
+      - jackpots-logs:/var/log/ft_wheel
+      - wheels-configs:/backend/django/data/wheel_configs
     environment:
       - DEBUG=${DEBUG}
       - HOSTNAME=${HOSTNAME}
@@ -33,9 +32,9 @@ services:
       - postgres_password
       - postgres_db
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     networks:
-      - pg_network
+      - pg-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 2s
@@ -46,15 +45,13 @@ services:
 
     
 networks:
-  ngx_network:
-    driver: bridge
-  pg_network:
+  pg-network:
     driver: bridge
 
 volumes:
-  postgres_data:
-  ft_wheel_logs:
-  wheel_configs:
+  postgres-data:
+  jackpots-logs:
+  wheels-configs:
 
 secrets:
   # Postgres

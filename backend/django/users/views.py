@@ -48,6 +48,7 @@ def login_view(request):
 @require_http_methods(["GET"])
 def callback_view(request):
 	code = request.GET.get('code')
+	state_param = request.GET.get('state')
 
 	if request.GET.get('error'):
 		return HttpResponseBadRequest('OAuth sent an error.')
@@ -57,6 +58,13 @@ def callback_view(request):
 	try: 
 		oauth_state = OauthStateManager.get_state(session_id=request.session.session_key)
 		if not oauth_state:
+			return redirect(f"{settings.WEBSITE_URL}/login?error=invalid_state")
+		# Strictly validate 'state' returned by OAuth provider against stored value
+		if not state_param or state_param != oauth_state.state:
+			try:
+				oauth_state.delete()
+			except Exception:
+				pass
 			return redirect(f"{settings.WEBSITE_URL}/login?error=invalid_state")
 	except Exception as e:
 		logger.error(f"Error retrieving OAuth state: {e}")
@@ -93,6 +101,11 @@ def callback_view(request):
 		if created:
 			user.save()
 
+		# Rotate the session to prevent fixation, then log the user in
+		try:
+			request.session.cycle_key()
+		except Exception:
+			pass
 		login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 	except requests.exceptions.RequestException as e:
 		oauth_state.delete()

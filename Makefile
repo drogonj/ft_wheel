@@ -2,7 +2,7 @@
 # ft_wheel Project Makefile
 # ========================
 
-PROJECT_NAME = ft_wheel_github
+PROJECT_NAME = ft_wheel
 SNAPSHOT_DIR = ./snapshots
 TIMESTAMP   = $(shell date +"%Y%m%d_%H%M%S")
 
@@ -46,15 +46,15 @@ secrets:
 
 up: .env secrets
 	@echo "🚀 Starting project with Docker Compose..."
-	docker compose up --build
+	docker compose -p $(PROJECT_NAME) up --build -d
 
 down:
 	@echo "🛑 Stopping project..."
-	docker compose down
+	docker compose -p $(PROJECT_NAME) down
 
 logs:
 	@echo "📜 Showing logs..."
-	docker compose logs -f
+	docker compose -p $(PROJECT_NAME) logs -f
 
 # ------------------------
 # Snapshot management
@@ -66,7 +66,7 @@ snapshot:
 	@mkdir -p $(SNAPSHOT_DIR)
 	@if [ -z "$(VOLUMES)" ]; then \
 		echo "⚠️ No volumes found for project $(PROJECT_NAME)"; \
-		exit 1; \
+		exit 0; \
 	fi
 	@# Create lock file to prevent concurrent snapshots
 	@if [ -f "$(SNAPSHOT_DIR)/.snapshot_lock" ]; then \
@@ -192,6 +192,6 @@ fclean:
 	@echo "⚠️ Full cleanup with snapshot"
 	$(MAKE) snapshot
 	@echo "🔥 Removing containers, images, and volumes..."
-	docker compose down --rmi all -v
+	docker compose -p $(PROJECT_NAME) down --rmi all -v
 
 re: fclean all

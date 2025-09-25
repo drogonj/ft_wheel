@@ -2,38 +2,7 @@ import importlib, logging, queue, os
 from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 
 from api.intra import intra_api
-
-# ---------------------
-# non-blocking logging setup
-# ---------------------
-LOG_DIR = "/var/log/ft_wheel"
-os.makedirs(LOG_DIR, exist_ok=True)
-
-log_queue = queue.Queue(-1)  # file-backed queue handled by QueueListener thread
-
-file_info_path = os.path.join(LOG_DIR, "jackpot_info.log")
-file_error_path = os.path.join(LOG_DIR, "jackpot_error.log")
-
-file_handler_info = RotatingFileHandler(file_info_path, maxBytes=10 * 1024 * 1024, backupCount=3)
-file_handler_info.setLevel(logging.INFO)
-file_handler_info.addFilter(lambda record: record.levelno <= logging.INFO)
-file_handler_error = RotatingFileHandler(file_error_path, maxBytes=10 * 1024 * 1024, backupCount=3)
-file_handler_error.setLevel(logging.ERROR)
-file_handler_error.addFilter(lambda record: record.levelno >= logging.ERROR)
-
-
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-file_handler_info.setFormatter(formatter)
-file_handler_error.setFormatter(formatter)
-
-# QueueListener will consume log_queue and write to handlers on a background thread.
-_queue_listener = QueueListener(log_queue, file_handler_info, file_handler_error)
-_queue_listener.start()
-
-logger = logging.getLogger("intra")
-logger.setLevel(logging.INFO)
-logger.addHandler(QueueHandler(log_queue))
-
+from .jackpot_logging import logger
 
 def _parse_function(function):
     """

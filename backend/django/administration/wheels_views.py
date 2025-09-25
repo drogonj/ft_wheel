@@ -5,12 +5,11 @@ from django.views.decorators.csrf import csrf_protect
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponse
 from django.conf import settings
 from django.views.decorators.http import require_GET, require_POST
-import random, logging, json
-import os
+import os, json
 
 from ft_wheel.utils import load_wheels, build_wheel_versions
+from .admin_logging import logger as admin_logger
 
-logger = logging.getLogger('backend')
 
 def user_can_access_wheels(user):
     """Check if user can access wheels administration"""
@@ -76,7 +75,7 @@ def edit_wheel(request, config: str):
             current_sectors = settings.WHEEL_CONFIGS[config]['sectors']
             return JsonResponse({'file': file_data, 'ordered': current_sectors})
         except Exception as e:
-            logger.error(f"Failed to load wheel {config}: {e}")
+            admin_logger.error(f"Failed to load wheel {config}: {e}")
             return JsonResponse({'error': str(e)}, status=500)
 
     # POST: Update wheel (requires admin)
@@ -85,7 +84,8 @@ def edit_wheel(request, config: str):
     
     try:
         payload = json.loads(request.body)
-    except Exception:
+    except Exception as e:
+        admin_logger.error(f"wheel_edit invalid_json by={request.user.login} slug={config} err={e}")
         return HttpResponseBadRequest('Invalid JSON')
 
     # Determine what format we're receiving and convert appropriately
@@ -135,6 +135,7 @@ def edit_wheel(request, config: str):
     elif 'jackpots' in payload and isinstance(payload['jackpots'], dict):
         wheel_data = {'jackpots': payload['jackpots']}
     else:
+        admin_logger.error(f"wheel_edit invalid_payload by={request.user.login} slug={config}")
         return HttpResponseBadRequest('Expected "sectors", "sequence", or "jackpots" in payload')
 
     # Handle metadata (preserve existing if not provided)
@@ -160,7 +161,7 @@ def edit_wheel(request, config: str):
             os.replace(file_path, new_file_path)
             file_path = new_file_path
     except Exception as e:
-        logger.error(f"Failed to rename wheel file from {config} to {final_url}: {e}")
+        admin_logger.error(f"wheel_edit rename_failed by={request.user.login} from={config} to={final_url} err={e}")
         return JsonResponse({'error': f'Failed to rename file: {e}'}, status=500)
 
     # Save file
@@ -168,13 +169,15 @@ def edit_wheel(request, config: str):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(wheel_data, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        logger.error(f"Failed to save wheel {config}: {e}")
+        admin_logger.error(f"wheel_edit save_failed by={request.user.login} slug={final_url} err={e}")
         return JsonResponse({'error': f'Failed to write file: {e}'}, status=500)
 
     # Reload and return
     versions = _reload_wheels_and_versions()
-    logger.info(f"Rebuilt wheel versions after edit: {versions}")
-    
+    sectors = settings.WHEEL_CONFIGS.get(final_url, {}).get('sectors', [])
+    sector_labels = [s.get('label', '') for s in sectors if isinstance(s, dict)]
+    admin_logger.info(f"wheel_edit by={request.user.login} slug={final_url} title={final_title} sectors={len(sectors)} sector_labels={sector_labels}")
+
     new_sectors = settings.WHEEL_CONFIGS.get(final_url, {}).get('sectors', [])
     return JsonResponse({
         'status': 'ok', 
@@ -197,18 +200,32 @@ def upload_wheel(request):
         return HttpResponseForbidden("Modification access denied")
 
     data = None
+    MAX_BYTES = 512 * 1024  # 512KB per upload
     # Multipart upload
     if request.FILES.get('file'):
         try:
-            raw = request.FILES['file'].read().decode('utf-8')
+            f = request.FILES['file']
+            if f.size and f.size > MAX_BYTES:
+                return HttpResponseBadRequest('File too large (max 512KB)')
+            raw = f.read(MAX_BYTES + 1)
+            if len(raw) > MAX_BYTES:
+                return HttpResponseBadRequest('File too large (max 512KB)')
+            raw = raw.decode('utf-8', errors='strict')
             data = json.loads(raw)
         except Exception as e:
+            admin_logger.error(f"wheel_upload invalid_file by={request.user.login} err={e}")
             return HttpResponseBadRequest(f'Invalid file: {e}')
     else:
         # Fallback to JSON body
         try:
-            data = json.loads(request.body)
-        except Exception:
+            if request.META.get('CONTENT_LENGTH') and int(request.META['CONTENT_LENGTH']) > MAX_BYTES:
+                return HttpResponseBadRequest('Payload too large (max 512KB)')
+            body = request.body[:MAX_BYTES + 1]
+            if len(body) > MAX_BYTES:
+                return HttpResponseBadRequest('Payload too large (max 512KB)')
+            data = json.loads(body)
+        except Exception as e:
+            admin_logger.error(f"wheel_upload invalid_json by={request.user.login} err={e}")
             return HttpResponseBadRequest('Invalid JSON payload')
 
     if not isinstance(data, dict):
@@ -245,6 +262,7 @@ def upload_wheel(request):
     try:
         os.makedirs(settings.WHEEL_CONFIGS_DIR, exist_ok=True)
     except Exception as e:
+        admin_logger.error(f"wheel_upload mkdir_failed by={request.user.login} err={e}")
         return JsonResponse({'error': f'Failed to ensure configs dir: {e}'}, status=500)
 
     # Save file
@@ -253,11 +271,16 @@ def upload_wheel(request):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(out, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        logger.error(f"Failed to upload wheel {normalized}: {e}")
+        admin_logger.error(f"wheel_upload save_failed by={request.user.login} slug={normalized} err={e}")
         return JsonResponse({'error': str(e)}, status=500)
 
     versions = _reload_wheels_and_versions()
-    logger.info(f"Rebuilt wheel versions after upload: {versions}")
+    sectors = settings.WHEEL_CONFIGS.get(normalized, {}).get('sectors', [])
+    sector_labels = [s.get('label', '') for s in sectors if isinstance(s, dict)]
+    admin_logger.info(
+       f"wheel_upload by={request.user.login} slug={normalized} title={title} "
+       f"sectors_count={len(sectors)} sectors={sector_labels}"
+    )
     return JsonResponse({'status': 'uploaded', 'url': normalized, 'title': title})
 
 
@@ -270,7 +293,8 @@ def create_wheel(request):
 
     try:
         payload = json.loads(request.body)
-    except Exception:
+    except Exception as e:
+        admin_logger.error(f"wheel_create invalid_json by={request.user.login} err={e}")
         return HttpResponseBadRequest('Invalid JSON')
     
     raw_name = payload.get('url') or payload.get('name')
@@ -294,11 +318,13 @@ def create_wheel(request):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(wheel_data, f, indent=2, ensure_ascii=False)
     except Exception as e:
-        logger.error(f"Failed to create wheel {normalized_name}: {e}")
+        admin_logger.error(f"wheel_create save_failed by={request.user.login} slug={normalized_name} err={e}")
         return JsonResponse({'error': str(e)}, status=500)
     
     versions = _reload_wheels_and_versions()
-    logger.info(f"Rebuilt wheel versions after create: {versions}")
+    sectors = settings.WHEEL_CONFIGS.get(normalized_name, {}).get('sectors', [])
+    sector_labels = [s.get('label', '') for s in sectors if isinstance(s, dict)]
+    admin_logger.info(f"wheel_create by={request.user.login} slug={normalized_name} title={title} sectors_count={len(sectors)} sector_labels={sector_labels}")
     return JsonResponse({'status': 'created', 'url': normalized_name, 'title': title})
 
 
@@ -318,7 +344,7 @@ def delete_wheel(request, config: str):
         if os.path.exists(file_path):
             os.remove(file_path)
     except Exception as e:
-        logger.error(f"Failed to delete wheel file {config}: {e}")
+        admin_logger.error(f"wheel_delete delete_failed by={request.user.login} slug={config} err={e}")
         return JsonResponse({'error': f'Cannot delete file: {e}'}, status=500)
     
     # Remove from memory and update session if needed
@@ -328,7 +354,7 @@ def delete_wheel(request, config: str):
         request.session['wheel_config_type'] = fallback
     
     versions = _reload_wheels_and_versions()
-    logger.info(f"Rebuilt wheel versions after delete: {versions}")
+    admin_logger.info(f"wheel_delete by={request.user.login} slug={config}")
     return JsonResponse({'status': 'deleted', 'name': config})
 
 
@@ -347,7 +373,6 @@ def download_wheel(request, config: str):
         with open(file_path, 'r', encoding='utf-8') as f:
             data = f.read()
     except Exception as e:
-        logger.error(f"Failed to read wheel file {config}: {e}")
         return JsonResponse({'error': str(e)}, status=500)
     
     response = HttpResponse(data, content_type='application/json')

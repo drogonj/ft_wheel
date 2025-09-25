@@ -1,4 +1,8 @@
 
+# # # # # # # # # # # # # # 
+# Default jackpot functions
+# # # # # # # # # # # # # #
+
 def default(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
     """Default function when landing on a sector.
     Returns: (bool, str) - (success, message)

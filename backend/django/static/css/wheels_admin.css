@@ -146,7 +146,7 @@ input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 0.125rem rgba(59, 130, 246, 0.3);
-    background-color: var(--bg-panel);
+    background-color: var(--bg-primary);
 }
 
 input::placeholder, textarea::placeholder {

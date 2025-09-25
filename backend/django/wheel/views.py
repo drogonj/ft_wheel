@@ -67,10 +67,12 @@ def spin_view(request):
     if current_version and client_version != current_version:
         return JsonResponse({'error': 'outdated_wheel', 'expected_version': current_version if current_version else "unknown"}, status=409)
 
+    # YES IT IS RANDOM
     result = random.randint(0, len(sectors)-1)
+    # # # # # # # # # # # # # # # # 
+
     request.user.last_spin = timezone.now()
     request.user.save(update_fields=["last_spin"])
-
     try:
         success, message, data = handle_jackpots(request.user, sectors[result])
             
