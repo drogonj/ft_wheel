@@ -175,8 +175,7 @@ def edit_wheel(request, config: str):
     # Reload and return
     versions = _reload_wheels_and_versions()
     sectors = settings.WHEEL_CONFIGS.get(final_url, {}).get('sectors', [])
-    sector_labels = [s.get('label', '') for s in sectors if isinstance(s, dict)]
-    admin_logger.info(f"wheel_edit by={request.user.login} slug={final_url} title={final_title} sectors={len(sectors)} sector_labels={sector_labels}")
+    admin_logger.info(f"wheel_edit by={request.user.login} slug={final_url} title={final_title} sectors={len(sectors)} sectors={str(sectors)}")
 
     new_sectors = settings.WHEEL_CONFIGS.get(final_url, {}).get('sectors', [])
     return JsonResponse({
@@ -276,10 +275,9 @@ def upload_wheel(request):
 
     versions = _reload_wheels_and_versions()
     sectors = settings.WHEEL_CONFIGS.get(normalized, {}).get('sectors', [])
-    sector_labels = [s.get('label', '') for s in sectors if isinstance(s, dict)]
     admin_logger.info(
        f"wheel_upload by={request.user.login} slug={normalized} title={title} "
-       f"sectors_count={len(sectors)} sectors={sector_labels}"
+       f"sectors_count={len(sectors)} sectors={str(sectors)}"
     )
     return JsonResponse({'status': 'uploaded', 'url': normalized, 'title': title})
 
@@ -323,8 +321,7 @@ def create_wheel(request):
     
     versions = _reload_wheels_and_versions()
     sectors = settings.WHEEL_CONFIGS.get(normalized_name, {}).get('sectors', [])
-    sector_labels = [s.get('label', '') for s in sectors if isinstance(s, dict)]
-    admin_logger.info(f"wheel_create by={request.user.login} slug={normalized_name} title={title} sectors_count={len(sectors)} sector_labels={sector_labels}")
+    admin_logger.info(f"wheel_create by={request.user.login} slug={normalized_name} title={title} sectors_count={len(sectors)} sectors={str(sectors)}")
     return JsonResponse({'status': 'created', 'url': normalized_name, 'title': title})
 
 
