@@ -10,9 +10,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize marks indicators
     initializeMarksIndicators();
     
-    // Initialize tooltips
-    initializeTooltips();
-    
     // Convert UTC timestamps to user's local time
     convertTimestampsToLocal();
 });
@@ -46,9 +43,6 @@ function formatTimestampToLocal(timestamp) {
             console.error('Invalid timestamp:', timestamp);
             return timestamp; // Return original if can't parse
         }
-        
-        // Debug log
-        console.log('Converting timestamp:', timestamp, '→', date.toLocaleString());
         
         return date.toLocaleString();
     } catch (error) {
@@ -158,41 +152,6 @@ function initializeMarksIndicators() {
                 viewHistoryDetails(historyId, 'marks');
             });
         }
-    });
-}
-
-// Tooltip initialization
-function initializeTooltips() {
-    const tooltip = document.getElementById('marksTooltip');
-    let currentTooltipTarget = null;
-    
-    document.querySelectorAll('.marks-indicator').forEach(indicator => {
-        const historyId = indicator.getAttribute('data-history-id');
-        const markCount = indicator.querySelector('.mark-count');
-        
-        if (markCount) {
-            indicator.addEventListener('mouseenter', function(e) {
-                currentTooltipTarget = this;
-                showMarksTooltip(e, historyId);
-            });
-            
-            indicator.addEventListener('mouseleave', function() {
-                if (currentTooltipTarget === this) {
-                    hideMarksTooltip();
-                    currentTooltipTarget = null;
-                }
-            });
-        }
-    });
-    
-    // Hide tooltip when mouse leaves tooltip area
-    tooltip.addEventListener('mouseenter', function() {
-        // Keep tooltip visible when hovering over it
-    });
-    
-    tooltip.addEventListener('mouseleave', function() {
-        hideMarksTooltip();
-        currentTooltipTarget = null;
     });
 }
 
@@ -403,55 +362,6 @@ async function handleCancelSubmission(e) {
     } finally {
         hideLoadingSpinner();
     }
-}
-
-// Marks tooltip functionality
-async function showMarksTooltip(event, historyId) {
-    const tooltip = document.getElementById('marksTooltip');
-    
-    try {
-        const response = await fetch(`/adm/history/${historyId}/details/`, {
-            method: 'GET',
-            headers: {
-                'X-CSRFToken': csrfToken
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        if (data.marks.length > 0) {
-            const marksHtml = data.marks.map(mark => {
-                const localMarkTime = formatTimestampToLocal(mark.marked_at);
-                return `
-                <div class="tooltip-mark">
-                    <div class="tooltip-user">${mark.user}</div>
-                    <div class="tooltip-role">${mark.role}</div>
-                    ${mark.note ? `<div class="tooltip-note">"${mark.note}"</div>` : ''}
-                    <div class="tooltip-date">${localMarkTime}</div>
-                </div>
-            `;}).join('');
-            
-            tooltip.innerHTML = marksHtml;
-            
-            // Position tooltip
-            const rect = event.target.getBoundingClientRect();
-            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
-            tooltip.style.top = (rect.top - 10) + 'px';
-            tooltip.style.display = 'block';
-        }
-        
-    } catch (error) {
-        console.error('Error loading marks tooltip:', error);
-    }
-}
-
-function hideMarksTooltip() {
-    const tooltip = document.getElementById('marksTooltip');
-    tooltip.style.display = 'none';
 }
 
 // UI helper functions

@@ -4,7 +4,6 @@
     text-align: center;
     color: white;
     top: 6vh;
-    padding: 0.9375rem 1.875rem;
     padding: min(3vh, 3vw);
     font-size: min(3.5vh, 3.5vw);
     font-weight: 600;
@@ -58,14 +57,7 @@
             drop-shadow(0 0 60px rgba(0, 166, 255, 0.3));
 }
 
-@keyframes wheelSpin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(var(--spin-angle, 360deg));
-    }
-}
+/* Removed unused wheelSpin keyframes */
 
 #wheel {
     display: block;
@@ -160,17 +152,6 @@
     }
 }
 
-@keyframes fadeInDownLogout {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 @keyframes fadeInDown {
     from {
         opacity: 0;
@@ -187,11 +168,4 @@
     to { opacity: 1; }
 }
 
-@keyframes bounce {
-    0%, 100% {
-        transform: translateX(-50%) translateY(0);
-    }
-    50% {
-        transform: translateX(-50%) translateY(-10px);
-    }
-}
+/* Removed unused bounce keyframes */

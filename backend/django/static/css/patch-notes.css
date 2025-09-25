@@ -1,4 +1,4 @@
-/* Patch Notes Popup Styles - Utilisant le design existant */
+/* Patch Notes Popup Styles - Reuses existing design */
 .patch-notes-popup {
     display: none;
     position: fixed;
@@ -148,7 +148,7 @@
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Responsive pour mobile */
+/* Responsive for mobile */
 @media (max-width: 768px) {
     .patch-notes-content {
         width: 95vw;

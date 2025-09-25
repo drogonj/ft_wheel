@@ -1,0 +1,100 @@
+/* Shared Admin UI Base Styles */
+:root {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --border-color: #475569;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --border-radius: 0.5rem;
+  --border-radius-lg: 0.75rem;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+}
+
+/* Base container/header used by admin pages */
+.admin-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+  box-sizing: border-box;
+  width: 100%;
+  color: var(--text-primary);
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  border: 1px solid var(--border-color);
+}
+
+.admin-header h1 { margin: 0; font-weight: 700; }
+
+.admin-nav { display: flex; gap: var(--spacing-sm); flex-wrap: wrap; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  line-height: 1;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+}
+
+.btn-primary { background: var(--primary-color); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+.btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
+.btn-secondary:hover { background: var(--border-color); transform: translateY(-1px); }
+
+.btn-outline { background: transparent; color: var(--text-primary); border: 1px solid var(--border-color); }
+.btn-outline:hover { background: var(--bg-tertiary); transform: translateY(-1px); }
+
+.btn-danger { background: var(--danger-color); color: #fff; }
+.btn-danger:hover { background: var(--danger-hover); transform: translateY(-1px); }
+
+.btn-success { background: var(--success-color); color: #fff; }
+.btn-success:hover { background: #16a34a; transform: translateY(-1px); }
+
+.btn-small { padding: 0.35rem 0.75rem; font-size: 0.75rem; min-height: 2rem; }
+
+/* Dark scrollbar baseline */
+*::-webkit-scrollbar { width: 0.5rem; height: 0.5rem; }
+*::-webkit-scrollbar-track { background: var(--bg-tertiary); border-radius: 0.25rem; }
+*::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 0.25rem; }
+*::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* Responsive tweaks */
+@media (max-width: 48rem) {
+  .admin-container { padding: var(--spacing-md); }
+  .admin-header { padding: var(--spacing-md); margin-bottom: var(--spacing-lg); }
+}

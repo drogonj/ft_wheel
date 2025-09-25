@@ -331,19 +331,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-
-    // Add tooltips to buttons
-    const buttons = document.querySelectorAll('.btn');
-    buttons.forEach(button => {
-        button.addEventListener('mouseenter', function() {
-            const rect = this.getBoundingClientRect();
-            const isNearBottom = rect.bottom > window.innerHeight - 100;
-            
-            if (isNearBottom) {
-                this.style.transform = 'translateY(-2px)';
-            }
-        });
-    });
 });
 
 // Keyboard shortcuts info

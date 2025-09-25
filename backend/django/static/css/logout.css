@@ -18,7 +18,7 @@
     backdrop-filter: blur(5px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     animation: fadeInDownLogout 0.6s ease-out;
-    z-index: 100; /* Ajout d'un z-index pour le superposer au compteur */
+    z-index: 100; /* Ensure it's above the counter */
 }
 
 #logout:hover {
@@ -37,5 +37,17 @@
         top: auto;
         bottom: 10%;
         right: 3%;
+    }
+}
+
+/* Keyframes used by #logout animation */
+@keyframes fadeInDownLogout {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

@@ -7,6 +7,7 @@
   <title>ft_wheel - Wheels Administration</title>
   <link rel="icon" type="image/png" href="{% static 'images/wheel.png' %}">
   <link rel="stylesheet" href="{% static 'css/global.css' %}">
+  <link rel="stylesheet" href="{% static 'css/admin_base.css' %}">
   <link rel="stylesheet" href="{% static 'css/wheels_admin.css' %}">
 </head>
 <body>
@@ -54,6 +55,8 @@
             <button id="add-sector" class="btn btn-success">➕ Add Sector</button>
             <button id="save-sectors" class="btn btn-primary">💾 Save</button>
             <button id="download-wheel" class="btn btn-secondary">📥 Download</button>
+            <input id="upload-file" type="file" accept="application/json" style="display:none" />
+            <button id="upload-wheel" class="btn btn-secondary">📤 Upload</button>
           </div>
         </div>
       </div>

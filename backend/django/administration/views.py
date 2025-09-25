@@ -153,6 +153,16 @@ def edit_wheel(request, config: str):
         'slug': final_url  # Legacy compat
     })
 
+    # If URL (slug) changed, rename file path accordingly
+    new_file_path = _get_wheel_file_path(final_url)
+    try:
+        if new_file_path != file_path and os.path.exists(file_path):
+            os.replace(file_path, new_file_path)
+            file_path = new_file_path
+    except Exception as e:
+        logger.error(f"Failed to rename wheel file from {config} to {final_url}: {e}")
+        return JsonResponse({'error': f'Failed to rename file: {e}'}, status=500)
+
     # Save file
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
@@ -172,6 +182,83 @@ def edit_wheel(request, config: str):
         'title': final_title, 
         'url': final_url
     })
+
+
+@login_required
+@require_POST
+def upload_wheel(request):
+    """Upload a wheel configuration JSON file or raw JSON body.
+
+    Accepts multipart/form-data with a file field named 'file' or
+    application/json body with the wheel data. The JSON must contain at least
+    one of: 'sequence' (list) or 'jackpots' (dict). Optional fields: 'url'/'slug', 'title'.
+    """
+    if not user_can_modify_wheels(request.user):
+        return HttpResponseForbidden("Modification access denied")
+
+    data = None
+    # Multipart upload
+    if request.FILES.get('file'):
+        try:
+            raw = request.FILES['file'].read().decode('utf-8')
+            data = json.loads(raw)
+        except Exception as e:
+            return HttpResponseBadRequest(f'Invalid file: {e}')
+    else:
+        # Fallback to JSON body
+        try:
+            data = json.loads(request.body)
+        except Exception:
+            return HttpResponseBadRequest('Invalid JSON payload')
+
+    if not isinstance(data, dict):
+        return HttpResponseBadRequest('Payload must be a JSON object')
+
+    if not (('sequence' in data and isinstance(data['sequence'], list)) or
+            ('jackpots' in data and isinstance(data['jackpots'], dict))):
+        return HttpResponseBadRequest("JSON must include 'sequence' (list) or 'jackpots' (dict)")
+
+    raw_name = data.get('url') or data.get('slug') or 'uploaded'
+    normalized = _normalize_wheel_name(raw_name)
+
+    # If name already exists, add numeric suffix
+    base = normalized
+    i = 1
+    while normalized in settings.WHEEL_CONFIGS:
+        normalized = f"{base}-{i}"
+        i += 1
+
+    title = data.get('title') or normalized.capitalize()
+
+    # Build final data to save: preserve sequence/jackpots as provided
+    out = {
+        'url': normalized,
+        'slug': normalized,
+        'title': title,
+    }
+    if 'sequence' in data:
+        out['sequence'] = data['sequence']
+    if 'jackpots' in data:
+        out['jackpots'] = data['jackpots']
+
+    # Ensure directory exists
+    try:
+        os.makedirs(settings.WHEEL_CONFIGS_DIR, exist_ok=True)
+    except Exception as e:
+        return JsonResponse({'error': f'Failed to ensure configs dir: {e}'}, status=500)
+
+    # Save file
+    file_path = _get_wheel_file_path(normalized)
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(out, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error(f"Failed to upload wheel {normalized}: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+    versions = _reload_wheels_and_versions()
+    logger.info(f"Rebuilt wheel versions after upload: {versions}")
+    return JsonResponse({'status': 'uploaded', 'url': normalized, 'title': title})
 
 
 @login_required

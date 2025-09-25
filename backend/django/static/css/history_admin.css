@@ -1,22 +1,4 @@
-/* History Administration CSS - Dark Theme Fully Responsive */
-
-/* Base styles and theme variables */
-:root {
-    --bg-primary: #0f172a;
-    --bg-panel: #1e293b;
-    --bg-header: #334155;
-    --text-primary: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --color-primary: #3b82f6;
-    --color-primary-hover: #2563eb;
-    --color-success: #22c55e;
-    --color-success-hover: #16a34a;
-    --color-danger: #ef4444;
-    --color-danger-hover: #dc2626;
-    --color-warning: #eab308;
-    --border-color: #475569;
-    --shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
-}
+/* History Administration CSS - extends admin_base.css */
 
 /* Override global styles for dark theme */
 html {
@@ -338,7 +320,6 @@ body {
 .wheel {
     background-color: var(--bg-header);
     padding: 0.25rem 0.5rem;
-    /* border-radius: 0.375rem; */
     font-size: 0.75rem;
     text-align: center;
     white-space: nowrap;
@@ -381,6 +362,7 @@ body {
     padding: 0.25rem;
     border-radius: 0.375rem;
     transition: background-color 0.3s;
+    color: #56d510;
 }
 
 .marks-indicator:hover {
@@ -389,7 +371,7 @@ body {
 
 .mark-count {
     background-color: var(--color-success);
-    color: white;
+    color: #56d510;
     padding: 0.125rem 0.375rem;
     border-radius: 0.75rem;
     font-size: 0.75rem;
@@ -409,7 +391,6 @@ body {
 
 /* Actions */
 .actions {
-    /* display: flex; */
     gap: 0.3125rem;
     flex-wrap: wrap;
 }
@@ -581,66 +562,6 @@ body {
     padding: 0.625rem;
     border-radius: 0.375rem;
     margin-bottom: 0.9375rem;
-}
-
-/* Marks Tooltip */
-.marks-tooltip {
-    position: absolute;
-    background-color: var(--bg-header);
-    color: var(--text-primary);
-    padding: 0.625rem;
-    border-radius: 0.375rem;
-    font-size: 0.75rem;
-    display: none;
-    z-index: 1001;
-    max-width: 18.75rem;
-    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
-    border: 0.0625rem solid var(--border-color);
-}
-
-.marks-tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -0.3125rem;
-    border-width: 0.3125rem;
-    border-style: solid;
-    border-color: var(--bg-header) transparent transparent transparent;
-}
-
-.tooltip-mark {
-    border-bottom: 0.0625rem solid var(--border-color);
-    padding: 0.3125rem 0;
-    margin-bottom: 0.3125rem;
-}
-
-.tooltip-mark:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-}
-
-.tooltip-user {
-    font-weight: bold;
-    color: var(--color-primary);
-}
-
-.tooltip-role {
-    font-size: 0.625rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-}
-
-.tooltip-note {
-    margin-top: 0.1875rem;
-    font-style: italic;
-    color: var(--text-primary);
-}
-
-.tooltip-date {
-    font-size: 0.625rem;
-    color: var(--text-secondary);
-    margin-top: 0.125rem;
 }
 
 /* Details Display */

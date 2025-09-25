@@ -565,6 +565,52 @@ document.getElementById('download-wheel').addEventListener('click', () => {
   window.location.href = `/adm/wheels/${currentWheel}/download/`;
 });
 
+// Upload wheel from JSON file
+document.getElementById('upload-wheel').addEventListener('click', async () => {
+  const fileInput = document.getElementById('upload-file');
+  fileInput.value = '';
+  fileInput.click();
+});
+
+document.getElementById('upload-file').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+
+  if (file.type && file.type !== 'application/json') {
+    setStatus('Please select a JSON file', 'error');
+    return;
+  }
+
+  setStatus('Uploading wheel...');
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const r = await fetch('/adm/wheels/upload/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken },
+      body: form
+    });
+
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json();
+    setStatus(`Uploaded wheel '${j.url}'`, 'success');
+
+    await fetchWheels();
+    if (j.url) {
+      currentWheel = j.url;
+      wheelSelect.value = j.url;
+      await loadWheel(j.url);
+    }
+  } catch (error) {
+    console.error('Upload error:', error);
+    setStatus(`Upload error: ${error.message}`, 'error');
+  }
+});
+
 // Drag & drop reordering for table rows
 let dragEl = null;
 function addDragHandlers(tr) {

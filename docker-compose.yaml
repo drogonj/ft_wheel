@@ -7,6 +7,7 @@ services:
       - pg_network
     volumes:
       - ft_wheel_logs:/var/log/ft_wheel
+      - wheel_configs:/backend/django/data/wheel_configs
     environment:
       - DEBUG=${DEBUG}
       - HOSTNAME=${HOSTNAME}
@@ -53,6 +54,7 @@ networks:
 volumes:
   postgres_data:
   ft_wheel_logs:
+  wheel_configs:
 
 secrets:
   # Postgres

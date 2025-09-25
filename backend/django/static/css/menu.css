@@ -174,11 +174,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* Animation pour le menu */
-@keyframes slideIn {
-    from { transform: translateX(-100%); }
-    to { transform: translateX(0); }
-}
+/* Menu animations */
 
 @keyframes fadeIn {
     from { opacity: 0; }
