@@ -62,7 +62,7 @@
 }
 
 .menu-content {
-    padding: 125px 15px 20px;
+    padding: min(13vh, 13vw) min(1vh, 1vw) 20px;
     color: white;
 }
 
