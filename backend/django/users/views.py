@@ -37,15 +37,6 @@ def login_view(request):
 	except Exception as e:
 		logger.error(f"Unexpected error: {e}")
 		return HttpResponseBadRequest('An unexpected error occurred.')
-	
-	######################################
-	# TODO: REMOVE THOSE LINES (Intra down)
-	######################################
-	user, created = User.objects.get_or_create(
-		login='ngalzand',
-	)
-	login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-	return redirect(f"{settings.WEBSITE_URL}/")
 
 	return render(request, 'users/auth.html',
 	{
