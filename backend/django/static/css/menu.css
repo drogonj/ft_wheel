@@ -18,7 +18,7 @@
 
 .menu-toggle {
     position: absolute;
-    top: 1.5%;
+    top: 5%;
     left: 3%;
     z-index: 998;
     cursor: pointer;

@@ -187,9 +187,38 @@ def site_settings_api(request):
                 'maintenance_message': settings.maintenance_message,
                 'jackpot_cooldown': settings.jackpot_cooldown,
                 'jackpot_cooldown_hours': settings.jackpot_cooldown // 3600,
+                'announcement_message': settings.announcement_message,
             }
         })
         
     except Exception as e:
         admin_logger.error(f"Error getting site settings: {e}")
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@csrf_protect
+@require_POST
+def update_announcement_api(request):
+    """Update site-wide announcement message"""
+    if not user_can_modify_settings(request.user):
+        return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        message = (data.get('message') or '').strip()
+        if len(message) > 255:
+            return JsonResponse({'success': False, 'error': 'Message too long (max 255)'}, status=400)
+
+        site_settings, _ = SiteSettings.objects.get_or_create(pk=1)
+        site_settings.announcement_message = message or "Welcome on ft_wheel, have fun !"
+        site_settings.save(update_fields=['announcement_message'])
+        admin_logger.info(f"announcement_update by={request.user.login} message_len={len(site_settings.announcement_message)}")
+
+        return JsonResponse({'success': True, 'message': 'Announcement updated successfully'})
+    except (json.JSONDecodeError, ValueError):
+        admin_logger.error(f"announcement_update_error by={request.user.login} error=Invalid data")
+        return JsonResponse({'success': False, 'error': 'Invalid data'}, status=400)
+    except Exception as e:
+        admin_logger.error(f"announcement_update_error by={request.user.login} error={str(e)}")
         return JsonResponse({'success': False, 'error': str(e)}, status=500)

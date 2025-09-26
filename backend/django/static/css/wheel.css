@@ -1,9 +1,8 @@
-
 #counter {
     position: absolute;
     text-align: center;
     color: white;
-    top: 6vh;
+    top: min(5vh, 10vw);
     padding: min(3vh, 3vw);
     font-size: min(3.5vh, 3.5vw);
     font-weight: 600;
@@ -168,4 +167,53 @@
     to { opacity: 1; }
 }
 
-/* Removed unused bounce keyframes */
+
+/* Announcement marquee */
+.announcement-marquee {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: min(4vh, 8vw);
+    background: linear-gradient(90deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+    border-top: 2px dotted #ffd700;
+    border-bottom: 2px dotted #ffd700;
+    z-index: 1000;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+}
+
+.announcement-track {
+    position: absolute;
+    white-space: nowrap;
+    will-change: transform;
+    animation: marquee-horizontal 30s linear infinite;
+    display: flex;
+    align-items: center;
+}
+
+.announcement-text {
+    color: #ffc700;
+    font-weight: 600;
+    font-size: min(2vh, 4vw);
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    letter-spacing: 1px;
+    margin-right: 20rem;
+}
+
+.announcement-separator {
+    color: #ffd700;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    margin: 0 2rem;
+}
+
+@keyframes marquee-horizontal {
+    from { 
+        transform: translateX(0); 
+    }
+    to { 
+        transform: translateX(-50%); 
+    }
+}

@@ -28,9 +28,31 @@
             window.CURRENT_WHEEL_VERSION_ID = "{{ wheel_version_id }}";
         </script>
     </head>
-    <body>
+    <body{% if announcement_message %} class="has-announcement"{% endif %}>
 
         {% include 'wheel/menu.html' %}
+
+        {% if announcement_message %}
+        <div class="announcement-marquee">
+            <div class="announcement-track">
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+                <span class="announcement-text">{{ announcement_message }}</span>
+            </div>
+        </div>
+        {% endif %}
 
         <p id="counter"></p>
         <div id="spin_the_wheel">

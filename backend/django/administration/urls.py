@@ -10,6 +10,7 @@ urlpatterns = [
     path('adm/control-panel/', control_panel_views.control_panel_view, name='control_panel'),
     path('adm/control-panel/maintenance/toggle/', control_panel_views.toggle_maintenance_api, name='toggle_maintenance_api'),
     path('adm/control-panel/jackpot-cooldown/', control_panel_views.update_jackpot_cooldown_api, name='update_jackpot_cooldown_api'),
+    path('adm/control-panel/announcement/', control_panel_views.update_announcement_api, name='update_announcement_api'),
     path('adm/control-panel/settings/', control_panel_views.site_settings_api, name='site_settings_api'),
     
     # Admin wheel management (superusers only)

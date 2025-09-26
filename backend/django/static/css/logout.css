@@ -1,6 +1,6 @@
 #logout {
     position: absolute;
-    top: 2%;
+    top: 5%;
     right: 2%;
     padding: max(0.75vw, 1vh) max(2vw, 3vh);
     background: linear-gradient(145deg, #4776E6, #8E54E9);

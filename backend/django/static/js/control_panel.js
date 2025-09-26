@@ -278,6 +278,29 @@ async function updateJackpotCooldown() {
     }
 }
 
+// Update announcement
+async function updateAnnouncement() {
+    const field = document.getElementById('announcement-message');
+    if (!field) return;
+    const message = field.value.trim();
+    if (message.length > 255) {
+        controlPanel.showNotification('Message too long (max 255)', 'error');
+        return;
+    }
+
+    controlPanel.showLoading();
+    try {
+        const result = await controlPanel.makeRequest('/adm/control-panel/announcement/', 'POST', { message });
+        if (result.success) {
+            controlPanel.showNotification(result.message, 'success');
+        }
+    } catch (error) {
+        // handled by makeRequest
+    } finally {
+        controlPanel.hideLoading();
+    }
+}
+
 // Refresh stats
 async function refreshStats() {
     controlPanel.showLoading();

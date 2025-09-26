@@ -10,6 +10,7 @@ from datetime import timedelta
 import random, logging, json, os, ast
 
 from .models import History
+from administration.models import SiteSettings
 from ft_wheel.utils import load_wheels, build_wheel_versions
 from api.jackpots_handler import handle_jackpots
 
@@ -41,7 +42,18 @@ def wheel_view(request):
 
     request.session['current_wheel_sectors'] = sectors
     # Pass Python list (template uses json_script)
-    return render(request, 'wheel/wheel.html', {"jackpots": sectors, "wheel_slug": config_type, 'wheel_version_id': version_id})
+    try:
+        site_settings, _ = SiteSettings.objects.get_or_create(pk=1)
+        announcement_message = site_settings.announcement_message
+    except Exception:
+        announcement_message = "Welcome on ft_wheel, have fun !"
+
+    return render(request, 'wheel/wheel.html', {
+        "jackpots": sectors,
+        "wheel_slug": config_type,
+        'wheel_version_id': version_id,
+        'announcement_message': announcement_message,
+    })
 
 
 @login_required

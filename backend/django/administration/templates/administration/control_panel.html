@@ -98,6 +98,26 @@
                 </div>
             </div>
 
+            <!-- Announcement Message -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h2>📣 Announcement</h2>
+                </div>
+                <div class="settings-content">
+                    <p>This message appears as a marquee on the homepage.</p>
+                    {% if can_modify %}
+                    <div class="form-group">
+                        <label for="announcement-message">Announcement Message:</label>
+                        <input id="announcement-message" type="text" maxlength="255" value="{{ settings.announcement_message }}" placeholder="Welcome on ft_wheel, have fun !" />
+                        <small>Max 255 characters</small>
+                    </div>
+                    <button class="btn btn-primary" onclick="updateAnnouncement()">Update Announcement</button>
+                    {% else %}
+                    <p class="permission-notice">You need admin permissions to modify this setting.</p>
+                    {% endif %}
+                </div>
+            </div>
+
             <!-- Jackpot Settings -->
             <div class="settings-card">
                 <div class="settings-header">
