@@ -1,9 +1,14 @@
 {% load static %}
     
-    <div class="menu-toggle">
+    <div class="menu-toggle" id="menu-toggle">
         <span></span>
         <span></span>
         <span></span>
+        <div class="menu-hint-arrows" id="menu-hint">
+            <div class="hint-arrow arrow-1">➜</div>
+            <div class="hint-arrow arrow-2">➜</div>
+            <div class="hint-arrow arrow-3">➜</div>
+        </div>
     </div>
     
     <div class="side-menu">
@@ -52,3 +57,21 @@
         </script>
     <script type="module" src="{% static 'js/menu.js' %}"></script>
     <script type="module" src="{% static 'js/utils.js' %}"></script>
+    <script>
+        // Hide menu hint arrows after the user interacts once
+        (function(){
+            const toggle = document.getElementById('menu-toggle');
+            const hint = document.getElementById('menu-hint');
+            if(!toggle || !hint) return;
+            const hide = () => {
+                hint.classList.add('menu-hint-hidden');
+                localStorage.setItem('menu_hint_dismissed','1');
+                toggle.removeEventListener('click', hide);
+            };
+            if(localStorage.getItem('menu_hint_dismissed') === '1') {
+                hint.classList.add('menu-hint-hidden');
+                return;
+            }
+            toggle.addEventListener('click', hide, { once: true });
+        })();
+    </script>

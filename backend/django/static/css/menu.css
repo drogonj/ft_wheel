@@ -196,3 +196,64 @@
         bottom: 10%;
     }
 }
+
+/* ===================== */
+/* Menu hint arrow guide */
+/* ===================== */
+.menu-hint-arrows {
+    display: block;
+    position: absolute;
+    inset: 0; /* full overlay of the button */
+    pointer-events: none;
+    filter: drop-shadow(0 0 4px rgba(255,215,0,0.6));
+}
+
+/* Base arrow style */
+.hint-arrow {
+    position: absolute;
+    font-size: min(1.75vw, 1.75vh);
+    line-height: 1;
+    opacity: 0.9;
+    animation: hintArrowPulse 1.6s ease-in-out infinite;
+}
+
+/* Arrow pointing from right (180°) */
+.hint-arrow.arrow-1 {
+    top: 0%;
+    left: 145%;
+    transform: translate(6px,-50%);
+    rotate: 170deg;
+    color: #ffffff2e;
+    text-shadow: 0 0 6px rgb(181 0 255 / 80%), 0 0 12px rgb(217 11 255 / 50%);
+}
+
+/* Arrow from bottom-right diagonal (225°) */
+.hint-arrow.arrow-2 {
+    top: 112.5%;
+    left: 112.5%;
+    transform: translate(4px,-60%);
+    rotate: 225deg;
+    color: #ffffff42;
+    text-shadow: 0 0 6px rgb(0 227 255 / 80%), 0 0 12px rgb(0 255 248 / 50%);
+}
+
+/* Arrow from bottom (270°) */
+.hint-arrow.arrow-3 {
+    top: 145%;
+    left: 0%;
+    transform: translate(-50%, 10px);
+    rotate: 285deg;
+    color: #ffffff38;
+    text-shadow: 0 0 6px rgb(0 255 95 / 80%), 0 0 12px rgb(0 255 107 / 50%);
+}
+
+@keyframes hintArrowPulse {
+    0%, 100% {
+        transform: translateX(0);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translateX(8px);
+        opacity: 1;
+    }
+}

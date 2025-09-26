@@ -7,6 +7,7 @@ window.addEventListener('pageshow', () => {
 document.addEventListener('DOMContentLoaded', () => {
     const menuToggle = document.querySelector('.menu-toggle');
     const sideMenu = document.querySelector('.side-menu');
+    const hintArrows = document.querySelectorAll('.hint-arrow');
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('showNotification') === 'true') {
@@ -16,12 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
     menuToggle.addEventListener('click', () => {
         menuToggle.classList.toggle('open');
         sideMenu.classList.toggle('open');
+        hintArrows.forEach(arrow => arrow.style.display = 'none');
     });
     
     document.addEventListener('click', (e) => {
         if (!sideMenu.contains(e.target) && !menuToggle.contains(e.target) && sideMenu.classList.contains('open')) {
             sideMenu.classList.remove('open');
             menuToggle.classList.remove('open');
+            hintArrows.forEach(arrow => arrow.style.display = 'block');
         }
     });
     
