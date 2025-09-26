@@ -176,21 +176,22 @@
     width: 100%;
     height: min(4vh, 8vw);
     background: linear-gradient(90deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
-    border-top: 2px dotted #ffd700;
-    border-bottom: 2px dotted #ffd700;
+    border-top: 1px dotted #ffd700;
+    border-bottom: 1px dotted #ffd700;
     z-index: 1000;
     overflow: hidden;
     display: flex;
     align-items: center;
+    
 }
 
 .announcement-track {
     position: absolute;
     white-space: nowrap;
     will-change: transform;
-    animation: marquee-horizontal 30s linear infinite;
     display: flex;
     align-items: center;
+    animation: marquee-horizontal 15s linear infinite;
 }
 
 .announcement-text {
@@ -214,6 +215,6 @@
         transform: translateX(0); 
     }
     to { 
-        transform: translateX(-50%); 
+        transform: translateX(-20%); 
     }
 }
