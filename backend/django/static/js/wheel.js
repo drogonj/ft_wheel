@@ -204,7 +204,7 @@ const update = () => {
         sectorIndex = sectorIndexNew;
         
         elSpin.textContent = "";
-        elSpin.style.background = sectors[sectorIndex].color;
+        elSpin.style.background = "radial-gradient(circle,rgba(0, 0, 0, 0.54) 0%, rgb(48, 42, 123) 100%)";
     } else {
         // Wheel stopped
         if (window.USER_TEST_MODE || counter_distance <= 0) {

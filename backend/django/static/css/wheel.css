@@ -95,10 +95,7 @@
     font-weight: 700;
     font-size: 175%;
     letter-spacing: 0.125rem;
-    text-shadow: 
-        0 2px 4px rgba(0, 0, 0, 0.3),
-        0 0 10px rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    will-change: background, box-shadow, transform;
 }
 
 #spin:hover {
@@ -178,7 +175,7 @@
     background: linear-gradient(90deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
     border-top: 1px dotted #ffd700;
     border-bottom: 1px dotted #ffd700;
-    z-index: 1000;
+    z-index: 998;
     overflow: hidden;
     display: flex;
     align-items: center;
