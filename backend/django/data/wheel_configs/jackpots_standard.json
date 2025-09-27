@@ -1,18 +1,30 @@
 {
-    "url": "standard",
-    "title": "Standard Mode ⚖️",
-    "jackpots": {
-
-        "1 Coalition point !": {
-            "color": "#FF0000",
-            "number": 3,
-            "message": "You won the coalition jackpot!",
-            "function": "builtins.coa_points",
-            "args": {
-                "amount": 1,
-                "reason": "{login} won 1 coalition point !"
-            }
-        }
-
+  "sequence": [
+    {
+      "label": "Jackpot !",
+      "color": "#1be4e4",
+      "message": "This is a template jackpot, no reward attached to this.",
+      "function": "builtins.default",
+      "args": {}
+    },
+    {
+      "label": "Jackpot !",
+      "color": "#621ee1",
+      "message": "This is a template jackpot, no reward attached to this.",
+      "function": "builtins.default",
+      "args": {}
+    },
+    {
+      "label": "Jackpot !",
+      "color": "#0767f8",
+      "message": "This is a template jackpot, no reward attached to this.",
+      "function": "builtins.default",
+      "args": {}
     }
+  ],
+
+  "url": "standard",
+  "title": "Standard ⚖️",
+  "slug": "standard"
+
 }

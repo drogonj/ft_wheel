@@ -1,45 +1,18 @@
 {
-  "current_version": "1.1.3",
+  "current_version": "1.0.0",
 
   "versions": {
 
-    "1.1.0": {
-      "title": "🚀 Nouvelles fonctionnalités",
+    "1.0.0": {
+      "title": "Welcome to ft_wheel !",
       "date": "2025-07-11",
       "notes": [
-        "Ajout du système de patch notes automatique",
-        "Revalorisation des points de coalition",
-        "Ajout de la Gaufre 🧇 !"
-      ]
-    },
-
-    "1.1.1": {
-      "title": "Événement à durée limitée",
-      "date": "2025-07-21",
-      "notes": [
-        "Donne un coup de boost a ta coalition",
-        "La roue standard est désormais 100% gagnante !",
-        "(Les Belle force à vous)"
-      ]
-    },
-
-    "1.1.2": {
-      "title": "Belle - Points x2!",
-      "date": "2025-07-23",
-      "notes": [
-        "Il est temps de remonter la pente, les points de coalitions sont multiplies par 2 pour les Belle !",
-        "Seulement pour les gains positifs bien-sur 🚀"
-      ]
-    },
-
-    "1.1.3": {
-      "title": "Piscine - Septembre 2025",
-      "date": "2025-09-04",
-      "notes": [
-        "Bienvenue aux nouveaux piscineux !",
-        "La crêpe 🥞 a fait son apparition !",
-        "Tentez votre chance toutes les 24 heures et gagnez de nombreuses récompenses !"
+        "Initial release of ft_wheel.",
+        "For any questions, please refer to the documentation.",
+        "Or to the actual administrator of this instance.",
+        "made with ❤️ by drogonj (ngalzand)"
       ]
     }
+
   }
 }

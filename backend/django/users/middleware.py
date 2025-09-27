@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.template import loader
 from administration.models import SiteSettings
+from django.conf import settings as django_settings
 
 class ConsentMiddleware:
     """
@@ -14,6 +15,11 @@ class ConsentMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        if django_settings.ASK_CONSENT is False:
+            # Consent not required, proceed normally
+            response = self.get_response(request)
+            return response
+
         excluded_routes = [
             reverse('consent'),
             reverse('accept_consent'),
@@ -31,6 +37,7 @@ class ConsentMiddleware:
 
         response = self.get_response(request)
         return response
+
 
 
 class MaintenanceMiddleware:

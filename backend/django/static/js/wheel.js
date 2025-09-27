@@ -2,7 +2,8 @@ import { getCookie } from "./utils.js";
 import { init_time_to_spin, counter_distance } from "./counter.js";
 import { showLoadingIndicator, hideLoadingIndicator } from "./menu.js";
 
-// 🔧 Function to reload wheel data dynamically
+
+// Function to reload wheel data dynamically
 window.reloadWheelData = async function() {
     try {
         showLoadingIndicator();
@@ -89,6 +90,7 @@ window.ang = 0; // Angle rotation in radians
 window.spinAnimation = null;
 window.animationFrameId = null;
 
+
 //* Get index of current sector */
 window.getIndex = (ang) => {
     // Adapt for the orientation of the wheel (starting point)
@@ -110,6 +112,7 @@ function playWinSound() {
     winSoundClone.play().catch(e => console.log("Audio playback blocked:", e));
 }
 
+
 document.addEventListener('wheelConfigChanged', (e) => {
     // If an external script updated window.sectors, rebind local sectors
     if (Array.isArray(window.sectors)) {
@@ -127,13 +130,11 @@ document.addEventListener('wheelConfigChanged', (e) => {
         spinAnimation.cancel();
         spinAnimation = null;
     }
-
     elSpin.textContent = "SPIN";
-    elSpin.removeAttribute('style');
-    
     update();
 
 });
+
 
 const showWinPopup = (message) => {
     const popup = document.getElementById('win-popup');
@@ -155,6 +156,7 @@ const showWinPopup = (message) => {
     claimBtn.addEventListener('click', closePopup);
     
 }
+
 
 //* Draw sectors and prizes texts to canvas */
 const drawSector = (sector, i) => {
@@ -185,27 +187,38 @@ const drawSector = (sector, i) => {
     ctx.restore();
 };
 
+
 const update = () => {
-    const currentProgress = spinAnimation?.effect.getComputedTiming().progress ?? 0;
-
-    const angDiff = ang - oldAng;
-    const angCurr = angDiff * currentProgress;
-    const angAbs = mod(oldAng + angCurr, TAU);
-
-    const sectorIndexNew = getIndex(angAbs);
-
-    if (sectorIndex !== sectorIndexNew) {
-        playTickSound();
-    }
-    sectorIndex = sectorIndexNew;
     if (spinAnimation) {
-        elSpin.textContent = sectors[sectorIndex].label;
+        const currentProgress = spinAnimation.effect.getComputedTiming().progress ?? 0;
+
+        const angDiff = ang - oldAng;
+        const angCurr = angDiff * currentProgress;
+        const angAbs = mod(oldAng + angCurr, TAU);
+
+        const sectorIndexNew = getIndex(angAbs);
+
+        if (sectorIndex !== sectorIndexNew) {
+            playTickSound();
+        }
+        sectorIndex = sectorIndexNew;
+        
+        elSpin.textContent = "";
         elSpin.style.background = sectors[sectorIndex].color;
     } else {
-        elSpin.textContent = "SPIN";
-        elSpin.removeAttribute('style');
+        // Wheel stopped
+        if (window.USER_TEST_MODE || counter_distance <= 0) {
+            // Can SPIN
+            elSpin.textContent = "SPIN";
+            elSpin.style.background = "linear-gradient(145deg, #4776E6, #8E54E9)";
+        } else {
+            // Can't SPIN
+            elSpin.textContent = "🔒";
+            elSpin.style.background = "#1b1728";
+        }
     }
 };
+
 
 const spin = (index, duration) => {
     const nindex = index; 
@@ -240,19 +253,18 @@ const spin = (index, duration) => {
     spinAnimation.addEventListener("finish", () => {
         showWinPopup(sectors[index].message);
         spinAnimation = null;
-        cancelAnimationFrame(animationFrameId);
-        elSpin.textContent = "Spin";
-        elSpin.style.background = "#1b1728";
-        elSpin.classList.remove('disabled'); // Activate button again
+        update();
     }, { once: true });
 
     init_time_to_spin();
 };
 
+
 const engine = () => {
     update();
     window.animationFrameId = requestAnimationFrame(engine);
 };
+
 
 // Only start the engine once!
 if (!window._engineStarted) {
@@ -260,9 +272,10 @@ if (!window._engineStarted) {
     window._engineStarted = true;
 }
 
+
 // In your spin handler, REMOVE engine(); call
 elSpin.addEventListener("click", async () => {
-    if (spinAnimation || elSpin.classList.contains('disabled')) return;
+    if (spinAnimation) return;
     if (!window.USER_TEST_MODE && counter_distance > 0) return; // In test mode we ignore countdown
     
     // Show loading indicator
@@ -292,7 +305,6 @@ elSpin.addEventListener("click", async () => {
                 return;
             }
             console.error(`Can't spin wheel: ${response.status}`);
-            elSpin.classList.remove('disabled');
             return;
         }
 
@@ -311,17 +323,15 @@ elSpin.addEventListener("click", async () => {
             spin(targetIndex);
         } else {
             console.error("Invalid sector index:", targetIndex);
-            elSpin.classList.remove('disabled');
         }
     } catch (error) {
         // Hide loading indicator on catch error
         hideLoadingIndicator();
-
         console.error('Error during spin:', error);
-        elSpin.classList.remove('disabled');
     }
 });
 window._spinListenerAdded = true;
+
 
 // INIT!
 sectors.forEach(drawSector);

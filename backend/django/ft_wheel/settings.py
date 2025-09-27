@@ -210,3 +210,5 @@ WHEEL_VERSION_IDS = build_wheel_versions(WHEEL_CONFIGS)
 HTTPS = os.environ.get('HTTPS', 'False') == 'True'
 
 WEBSITE_URL = f"{"https" if HTTPS else "http"}://{os.environ.get('HOSTNAME')}"
+
+ASK_CONSENT = os.environ.get('ASK_CONSENT', 'False') == 'True'
