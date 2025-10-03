@@ -2,8 +2,9 @@
      "superusers" : {
 
        "ngalzand" : {
-            "testmode": true,
-            "role": "admin"
+          "intra_id": 117633,
+          "testmode": true,
+          "role": "admin"
        }
        
      }

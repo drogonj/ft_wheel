@@ -338,6 +338,7 @@ async function handleCancelSubmission(e) {
         
         if (!response.ok) {
             const errorData = await response.json();
+            alert(`Error: ${errorData.error || `HTTP ${response.status}`}`);
             throw new Error(errorData.error || `HTTP ${response.status}`);
         }
         

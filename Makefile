@@ -40,11 +40,11 @@ help:
 .env:
 	@echo "⚠️  You must fill the .env file before running 'make up'."
 
-secrets:
+create-secrets:
 	@echo "🔑 Generating docker secrets..."
-	@sh docker_secrets.sh
+	sh docker_secrets.sh
 
-up: .env secrets
+up: .env create-secrets
 	@echo "🚀 Starting project with Docker Compose..."
 	docker compose -p $(PROJECT_NAME) up --build -d
 

@@ -30,10 +30,12 @@ if not 'superusers' in data:
 
 for login, details in data['superusers'].items():
     testmode = details.get('testmode', False)
+    intra_id = details.get('intra_id', None)
     role = details.get('role', 'moderator')  # Default role is 'moderator'
     if not User.objects.filter(login=login).exists():
         User.objects.create_superuser(
             login=login,
+            intra_id=intra_id,
             test_mode=testmode,
             role=role
         )

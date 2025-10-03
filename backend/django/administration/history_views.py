@@ -159,7 +159,7 @@ def cancel_history_entry(request, history_id):
             history.cancellation_reason = reason
             history.save()
             
-            admin_logger.info(f"history_cancel success by={request.user.login} history_id={history_id} function={history.function_name} reason={reason}")
+            admin_logger.info(f"history_cancel success by={request.user.login} history_id={history_id} function={history.function_name} reason={reason} msg={message} data={cancel_data}")
             
             return JsonResponse({
                 'success': True,
@@ -167,8 +167,8 @@ def cancel_history_entry(request, history_id):
                 'cancel_data': cancel_data
             })
         else:
-            admin_logger.error(f"history_cancel failed by={request.user.login} history_id={history_id} function={history.function_name} msg={message}")
-            return JsonResponse({'error': f'Cancellation failed: {message}'}, status=400)
+            admin_logger.error(f"history_cancel failed by={request.user.login} history_id={history_id} function={history.function_name} msg={message} data={cancel_data}")
+            return JsonResponse({'error': f'Cancellation failed: {message} {cancel_data}'}, status=400)
             
     except Exception as e:
         admin_logger.error(f"history_cancel error by={request.user.login} history_id={history_id} err={e}")

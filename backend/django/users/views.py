@@ -86,8 +86,12 @@ def callback_view(request):
 
 		user_data = response.json()
 
+		if not user_data.get('login') or not user_data.get('id'):
+			return HttpResponseBadRequest('Incomplete user data received from OAuth provider.')
+
 		user, created = User.objects.get_or_create(
 			login=user_data.get('login'),
+			intra_id=user_data.get('id'),
 		)
 
 		if created:

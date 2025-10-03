@@ -32,6 +32,9 @@
 #    "updated_at":"2025-09-17T13:04:58.077Z"
 # }
 
+# Example of DELETE /coalitions/{coa_id}/scores/{id}
+# TODO
+
 # Example of jackpots_<mod>.json entry:
 # "5 Coalition points !": {
 #     "color": "#FF0000",
@@ -60,20 +63,30 @@ def coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, 
         args: dict with keys:
             - amount: int, positive to add points, negative to remove points
             - reason: str, reason for the points change (optional)
+    Returns:
+        tuple: (success: bool, message: str, data: dict)
+
+    used api endpoints:
+    - GET /v2/users/{login}/coalitions
+    - POST /v2/coalitions/:coalition_id/scores
     """
 
     # Validate args
-    amount = int(args.get('amount', 0))
-    if not isinstance(amount, int):
-        raise ValueError("Amount must be an integer.")
-    reason = args.get('reason', 'No reason provided')
-    if not isinstance(reason, str):
-        raise ValueError("Reason must be a string.")
+    try:
+        amount = int(args.get('amount', 0))
+    except (ValueError, TypeError):
+        return False, "Amount must be a valid integer", {}
+    if amount == 0:
+        return False, "Amount cannot be zero, useless request", {}
+    try:
+        reason = str(args.get('reason', 'No reason provided'))
+    except (ValueError, TypeError):
+        return False, "Reason must be a string", {}
 
     # Search for template args in reason
     reason = reason.replace('{login}', user.login)
     # Fetch user coalitions
-    success, msg, data = api_intra.request('GET', f'/v2/users/{user.login}/coalitions')
+    success, msg, data = api_intra.request('GET', f'/v2/users/{user.intra_id}/coalitions')
 
     # Handle errors
     if not success:
@@ -98,4 +111,38 @@ def coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, 
 
 
 def cancel_coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
-    pass
+    """Cancel a coalition points change by its ID.
+    Args:   
+        api_intra: IntraAPI instance
+        user: User object
+        args: dict with keys:
+            - data of the original coa_points call, must include:
+                - id: int, ID of the coalition points change to cancel
+                - coalition_id: int, ID of the coalition
+    Returns:
+        tuple: (success: bool, message: str, data: dict)
+
+    used api endpoints:
+    - DELETE /v2/coalitions/:coalition_id/scores/:id (args: id, coalition_id)
+    """
+
+    # Validate args
+    try:   
+        int(args.get('id'))
+    except (ValueError, TypeError):
+        return False, "'id' argument must be a valid integer for cancel_coa_points.", args
+    if int(args.get('id')) <= 0:
+        return False, "'id' argument must be a positive integer for cancel_coa_points.", args
+    try:   
+        int(args.get('coalition_id'))
+    except (ValueError, TypeError):
+        return False, "'coalition_id' argument must be a valid integer for cancel_coa_points.", args
+    if int(args.get('coalition_id')) <= 0:
+        return False, "'coalition_id' argument must be a positive integer for cancel_coa_points.", args
+
+    # Sending cancel request
+    success, msg, data = api_intra.request(method='DELETE', url=f"/v2/coalitions/{args.get('coalition_id')}/scores/{args.get('id')}", headers={}, data={})
+
+    if not success:
+        return False, f"Failed to cancel coalition points change ID {args.get('id')}: {msg}", data
+    return success, msg, data

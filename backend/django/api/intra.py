@@ -1,8 +1,13 @@
 import time, asyncio, httpx
 from asgiref.sync import async_to_sync
 
-from users.views import oauth_secrets
+from ft_wheel.utils import docker_secret
 
+oauth_secrets = {
+    'oauth_uid': docker_secret("oauth_uid"),
+    'oauth_secret': docker_secret("oauth_secret"),
+}
+    
 
 # ---------------------
 # Async Intra API class
@@ -25,10 +30,8 @@ class AsyncIntraAPI:
 
         # token state (kept in-memory)
         self._token = None
-        # self._token_created_at = 0              # ← on n’en a plus besoin
-        # self._token_expires_in = 0              # ← on n’en a plus besoin
-        self._token_expiry_ts = 0.0               # ← timestamp d’expiration
-        # async lock(s): un lock par loop pour éviter les erreurs de loop
+        self._token_expiry_ts = 0.0 # timestamp when token expires
+        # async lock(s): handle errors with multiple event loops
         self._locks_by_loop: dict[asyncio.AbstractEventLoop, asyncio.Lock] = {}
 
         # reuse AsyncClient to benefit from connection pooling
@@ -72,14 +75,15 @@ class AsyncIntraAPI:
 
             now = time.time()
             expires_in = token.get("expires_in", 3600)
-            # fallback si la valeur est absente/incorrecte
+            # fallback if the value is missing/incorrect
             if not isinstance(expires_in, (int, float)) or expires_in <= 0:
                 expires_in = 3600
-            # petite marge de sécurité
+            # small safety margin
             self._token_expiry_ts = now + expires_in - 10
 
             self._token = token
             return self._token
+
 
     async def request(self, method: str, url: str, headers: dict = None, **kwargs) -> tuple[bool, str, dict]:
         """
@@ -111,6 +115,7 @@ class AsyncIntraAPI:
             req_headers["Authorization"] = f"Bearer {token['access_token']}"
 
             try:
+                # Do the request
                 resp = await self._client.request(method, full_url, headers=req_headers, **kwargs)
                 rc = resp.status_code
 

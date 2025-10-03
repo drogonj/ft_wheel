@@ -50,8 +50,11 @@ networks:
     driver: bridge
 
 volumes:
+  # Contain Database data
   postgres-data:
+  # Contain logs for example: Intra logs, Admin logs
   jackpots-logs:
+  # Contain wheel configurations
   wheels-configs:
 
 secrets:

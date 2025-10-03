@@ -35,6 +35,7 @@ class Account(AbstractBaseUser):
     last_login = models.DateTimeField(verbose_name="last login", auto_now=True)
 
     login = models.CharField(max_length=20, unique=True, blank=False, null=False)
+    intra_id = models.IntegerField(unique=True, blank=False, null=False)
 
     # User rights -> [user, moderator, admin]
     role = models.CharField(max_length=10, choices=ROLES, default='user')
