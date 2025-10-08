@@ -25,6 +25,7 @@
 
   "url": "standard",
   "title": "Standard ⚖️",
-  "slug": "standard"
+  "slug": "standard",
+  "ticket_only": false
 
 }

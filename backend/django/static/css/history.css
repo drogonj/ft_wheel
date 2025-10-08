@@ -138,7 +138,7 @@
     border: solid 0.1rem white;
     font-size: min(2vh, 2.5vw);
     transition: 0.1s;
-    cursor: grab;
+    cursor: pointer;
 }
 
 .history-selected {

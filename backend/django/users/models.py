@@ -1,9 +1,12 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+from django.apps import apps
 from datetime import timedelta
 import secrets, base64
 from administration.models import SiteSettings
+from django.db.models import Q
+from django.utils import timezone as dj_tz
 
 # Create your models here.
 class AccountManager(BaseUserManager):
@@ -113,9 +116,41 @@ class Account(AbstractBaseUser):
                 time_to_spin = cooldown_delta - time_since_last_spin
         
         return time_to_spin
-    
-    def can_spin(self):
-        if self.time_to_spin() > timedelta(0) and not self.test_mode:
+
+    def has_ticket(self, wheel_slug: str) -> bool:
+        if not wheel_slug:
+            return False
+        # Lazy import to avoid circular import at app load
+        Ticket = apps.get_model('wheel', 'Ticket')
+        return Ticket.objects.filter(user=self, wheel_slug=wheel_slug, used_at__isnull=True).exists()
+
+    def consume_ticket(self, wheel_slug: str) -> bool:
+        """Consume one unused ticket for this wheel. Returns True if consumed."""
+        if not wheel_slug:
+            return False
+        Ticket = apps.get_model('wheel', 'Ticket')
+        ticket = Ticket.objects.filter(user=self, wheel_slug=wheel_slug, used_at__isnull=True).order_by('created_at').first()
+        if not ticket:
+            return False
+        ticket.mark_used()
+        return True
+
+    def tickets_count(self, wheel_slug: str) -> int:
+        if not wheel_slug:
+            return 0
+        Ticket = apps.get_model('wheel', 'Ticket')
+        return Ticket.objects.filter(user=self, wheel_slug=wheel_slug, used_at__isnull=True).count()
+
+    def can_spin_wheel(self, wheel_slug: str, ticket_only: bool) -> bool:
+        """New gate: if ticket_only -> must have unused ticket.
+        Else keep cooldown logic (test_mode bypasses cooldown as before).
+        """
+        if self.test_mode:
+            return True
+        if ticket_only:
+            return self.has_ticket(wheel_slug)
+        # standard cooldown
+        if self.time_to_spin() > timedelta(0):
             return False
         return True
 

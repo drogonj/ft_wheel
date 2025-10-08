@@ -361,6 +361,7 @@ async function loadWheel(name) {
     // Update meta fields
     document.getElementById('edit-wheel-url').value = j.file.url || j.file.slug || name;
     document.getElementById('edit-wheel-title').value = j.file.title || name;
+    document.getElementById('edit-wheel-ticket-only').checked = !!j.file.ticket_only;
     
     renderSectors();
     setStatus(`Wheel '${name}' loaded (${sectors.length} sectors)`, 'success');
@@ -491,6 +492,7 @@ document.getElementById('update-wheel-meta').addEventListener('click', async () 
 
   const urlField = document.getElementById('edit-wheel-url').value.trim();
   const titleField = document.getElementById('edit-wheel-title').value.trim();
+  const ticketOnly = document.getElementById('edit-wheel-ticket-only').checked;
 
   if (!urlField) {
     setStatus('URL is required', 'error');
@@ -507,7 +509,7 @@ document.getElementById('update-wheel-meta').addEventListener('click', async () 
         'Content-Type': 'application/json',
         'X-CSRFToken': csrftoken
       }, 
-      body: JSON.stringify({ sectors, url: urlField, title: titleField }) 
+      body: JSON.stringify({ sectors, url: urlField, title: titleField, ticket_only: ticketOnly }) 
     });
     
     if (!r.ok) {

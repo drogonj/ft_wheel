@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -59,3 +60,34 @@ class History(models.Model):
     class Meta:
         ordering = ['-timestamp']
         verbose_name_plural = "Histories"
+
+
+class Ticket(models.Model):
+    """Represents a spin ticket grant. A ticket allows one spin regardless of cooldown.
+    If a wheel is marked as ticket_only, user must have at least one unused ticket for that wheel.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
+    wheel_slug = models.CharField(max_length=50, db_index=True)
+    granted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='granted_tickets')
+    created_at = models.DateTimeField(auto_now_add=True)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['wheel_slug', 'user']),
+            models.Index(fields=['used_at']),
+        ]
+        ordering = ['-created_at']
+
+    def __str__(self):
+        status = 'used' if self.used_at else 'unused'
+        return f"Ticket[{self.wheel_slug}] {self.user.login} ({status})"
+
+    @property
+    def is_used(self) -> bool:
+        return self.used_at is not None
+
+    def mark_used(self):
+        if not self.used_at:
+            self.used_at = timezone.now()
+            self.save(update_fields=['used_at'])

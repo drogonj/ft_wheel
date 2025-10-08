@@ -180,6 +180,43 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Tickets Management -->
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h2>🎫 Tickets</h2>
+                </div>
+                <div class="settings-content">
+                    <p>Grant spin tickets to users for specific wheels. Tickets are required for wheels marked as ticket-only.</p>
+                    {% if can_modify %}
+                    <div class="form-group">
+                        <label for="ticket-login">User login:</label>
+                        <input type="text" id="ticket-login" placeholder="marvin" />
+                    </div>
+                    <div class="form-group">
+                        <label for="ticket-wheel">Wheel slug:</label>
+                        <input type="text" id="ticket-wheel" placeholder="standard" />
+                        <small>Use one of the slugs from Wheels admin page</small>
+                    </div>
+                    <button class="btn btn-primary" onclick="grantTicket()">Grant Ticket</button>
+                    {% else %}
+                    <p class="permission-notice">You need admin permissions to grant tickets.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tickets Summary (separate, scrollable) -->
+            <div class="settings-card">
+                <div class="settings-header" style="display:flex; align-items:center; justify-content:space-between; gap:.5rem;">
+                    <h2 style="margin:0">📄 Tickets Summary</h2>
+                    <div class="header-actions">
+                        <button class="btn" onclick="refreshTickets()">Refresh Summary</button>
+                    </div>
+                </div>
+                <div class="settings-content">
+                    <div id="tickets-summary" style="max-height: 300px; overflow-y: auto; margin-top: .25rem; font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: .75rem; background: rgba(255,255,255,0.03)"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Recent Activity -->

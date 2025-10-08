@@ -48,7 +48,8 @@ def admin_wheels(request):
             'count': len(sectors),
             'sample': sectors[:5],
             'title': meta.get('title'),
-            'url': meta.get('url', slug)
+            'url': meta.get('url', slug),
+            'ticket_only': bool(meta.get('ticket_only', False)),
         }
     
     if request.headers.get('Accept', '').startswith('application/json'):
@@ -147,11 +148,13 @@ def edit_wheel(request, config: str):
 
     final_url = _normalize_wheel_name(payload.get('url') or existing.get('url') or config)
     final_title = payload.get('title') or existing.get('title') or final_url.capitalize()
+    final_ticket_only = bool(payload.get('ticket_only')) if 'ticket_only' in payload else bool(existing.get('ticket_only', False))
     
     wheel_data.update({
         'url': final_url,
         'title': final_title,
-        'slug': final_url  # Legacy compat
+        'slug': final_url,  # Legacy compat
+        'ticket_only': final_ticket_only,
     })
 
     # If URL (slug) changed, rename file path accordingly

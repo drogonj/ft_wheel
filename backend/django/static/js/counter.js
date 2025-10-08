@@ -2,44 +2,84 @@ import { getCookie } from "./utils.js";
 
 let countDownDate;
 export let counter_distance = 0;
+let timerId = null; // ensure a single interval
+let counterEl = null; // cache DOM reference
+let lastRenderedText = null; // avoid redundant DOM writes
 
 // Saving some constants for time calculations
 const hoursMult1 = 1000 * 60 * 60 * 24
 const hoursMult2 = 1000 * 60 * 60;
 
+function clearTimer() {
+  if (timerId !== null) {
+    clearInterval(timerId);
+    timerId = null;
+  }
+}
+
 function startTimer() {
-  setInterval(function() {
+  clearTimer();
+  if (!counterEl) counterEl = document.getElementById("counter");
+
+  const tick = () => {
+    // Ticket-only wheels: no timer updates
+    if (window.CURRENT_WHEEL_TICKET_ONLY === 'true') {
+      return;
+    }
     if (!countDownDate) return;
 
-    var now = new Date().getTime();
+    const now = Date.now();
     counter_distance = countDownDate - now;
 
-    var hours = Math.floor(counter_distance / hoursMult2);
-    var minutes = Math.floor((counter_distance % hoursMult2) / 60000);
-    var seconds = Math.floor((counter_distance % 60000) / 1000);
+    const hours = Math.floor(counter_distance / hoursMult2);
+    const minutes = Math.floor((counter_distance % hoursMult2) / 60000);
+    const seconds = Math.floor((counter_distance % 60000) / 1000);
 
-    console.log(counter_distance, hoursMult2, hours)
-
-    document.getElementById("counter").innerHTML = hours + "h "
-      + minutes + "m " + seconds + "s ";
-
+    let text;
     if (counter_distance < 0) {
-      document.getElementById("counter").innerHTML = "You can turn the wheel !";
+      text = "You can turn the wheel !";
+    } else {
+      text = `${hours}h ${minutes}m ${seconds}s `;
     }
-  }, 1000);
+
+    if (counterEl && text !== lastRenderedText) {
+      counterEl.textContent = text;
+      lastRenderedText = text;
+    }
+  };
+
+  // render immediately, then every second
+  tick();
+  timerId = setInterval(tick, 1000);
 }
 
 // INIT
 export async function init_time_to_spin()  {
   // Test mode or superuser: infinite spins, no countdown logic needed
   if (window.USER_TEST_MODE) {
-    const el = document.getElementById("counter");
-    if (el) {
-      el.textContent = '∞';
+    clearTimer();
+    if (!counterEl) counterEl = document.getElementById("counter");
+    if (counterEl) {
+      counterEl.textContent = '∞';
+      lastRenderedText = '∞';
     }
     counter_distance = 0;
     return;
+  } else if (window.CURRENT_WHEEL_TICKET_ONLY === 'true') {
+    // Ticket-only: no cooldown fetch, we just display tickets
+    clearTimer();
+    if (!counterEl) counterEl = document.getElementById("counter");
+    if (counterEl) {
+      const n = parseInt(window.CURRENT_WHEEL_TICKETS_COUNT || '0', 10) || 0;
+      const text = n === 1 ? 'You have 1 ticket 🎟️' : `You have ${n} tickets 🎟️`;
+      if (text !== lastRenderedText) {
+        counterEl.textContent = text;
+        lastRenderedText = text;
+      }
+    }
+    return;
   }
+
   try {
     const response = await fetch(`/time_to_spin/`, {
       method: 'GET',
@@ -82,7 +122,7 @@ export async function init_time_to_spin()  {
       seconds = parseFloat(timeParts[2]);
     }
 
-    const now = new Date().getTime();
+  const now = Date.now();
     const futureTime = now + (totalHours * hoursMult2) + (minutes * 60000) + (seconds * 1000);
 
     countDownDate = futureTime;

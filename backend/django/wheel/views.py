@@ -32,7 +32,9 @@ def wheel_view(request):
             request.session['wheel_config_type'] = first
 
     config_type = request.session.get('wheel_config_type')
-    sectors = wheels_store.get(config_type, {}).get('sectors', [])
+    meta = wheels_store.get(config_type, {})
+    sectors = meta.get('sectors', [])
+    ticket_only = bool(meta.get('ticket_only', False))
     # Compute (or fetch) version id
     version_ids = getattr(settings, 'WHEEL_VERSION_IDS', {})
     version_id = version_ids.get(config_type)
@@ -48,10 +50,20 @@ def wheel_view(request):
     except Exception:
         announcement_message = "Welcome on ft_wheel, have fun !"
 
+    # Count tickets for this wheel for UI purposes
+    tickets_count = 0
+    if ticket_only:
+        try:
+            tickets_count = request.user.tickets_count(config_type)
+        except Exception:
+            tickets_count = 0
+
     return render(request, 'wheel/wheel.html', {
         "jackpots": sectors,
         "wheel_slug": config_type,
         'wheel_version_id': version_id,
+        'wheel_ticket_only': ticket_only,
+        'wheel_tickets_count': tickets_count,
         'announcement_message': announcement_message,
     })
 
@@ -59,11 +71,15 @@ def wheel_view(request):
 @login_required
 @require_http_methods(["POST"])
 def spin_view(request):
-    if not request.user.can_spin():
-        return HttpResponseForbidden();
+    # Determine wheel and its mode
 
     config_type = request.session.get('wheel_config_type', 'standard')
-    sectors = settings.WHEEL_CONFIGS[config_type]['sectors'] if config_type in settings.WHEEL_CONFIGS else []
+    cfg = settings.WHEEL_CONFIGS.get(config_type, {})
+    sectors = cfg.get('sectors', [])
+    ticket_only = bool(cfg.get('ticket_only', False))
+
+    if not request.user.can_spin_wheel(config_type, ticket_only):
+        return HttpResponseForbidden()
     # If config not in sectors, reject like outdated version (this error should happen only if a wheel was deleted/renamed or a user beeing naughty)
     if not sectors:
         return JsonResponse({'error': 'outdated_wheel', 'expected_version': "unknown"}, status=409)
@@ -83,8 +99,18 @@ def spin_view(request):
     result = random.randint(0, len(sectors)-1)
     # # # # # # # # # # # # # # # # 
 
-    request.user.last_spin = timezone.now()
-    request.user.save(update_fields=["last_spin"])
+    # Consume ticket if needed, else set cooldown timestamp
+    # In test_mode, bypass both ticket consumption and cooldown updates
+    if ticket_only:
+        if not request.user.test_mode:
+            # If we fail to consume, block (race) — re-check server-side
+            consumed = request.user.consume_ticket(config_type)
+            if not consumed:
+                return JsonResponse({'error': 'no_ticket_available'}, status=403)
+    else:
+        if not request.user.test_mode:
+            request.user.last_spin = timezone.now()
+            request.user.save(update_fields=["last_spin"])
     try:
         success, message, data = handle_jackpots(request.user, sectors[result])
             
@@ -197,5 +223,8 @@ def current_wheel_config_api(request):
     
     return JsonResponse({
         'current_mode': current_mode,
-        'available_modes': list(wheels_store.keys())
+        'available_modes': [
+            {'slug': slug, 'ticket_only': bool(meta.get('ticket_only', False))}
+            for slug, meta in wheels_store.items()
+        ]
     })

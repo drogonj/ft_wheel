@@ -207,7 +207,7 @@ const update = () => {
         elSpin.style.background = "radial-gradient(circle,rgba(0, 0, 0, 0.54) 0%, rgb(48, 42, 123) 100%)";
     } else {
         // Wheel stopped
-        if (window.USER_TEST_MODE || counter_distance <= 0) {
+        if (window.USER_TEST_MODE || (window.CURRENT_WHEEL_TICKET_ONLY === 'false' && counter_distance <= 0) || (window.CURRENT_WHEEL_TICKET_ONLY === 'true' && window.CURRENT_WHEEL_TICKETS_COUNT > 0)) {
             // Can SPIN
             elSpin.textContent = "SPIN";
             elSpin.style.background = "linear-gradient(145deg, #4776E6, #8E54E9)";
@@ -276,8 +276,17 @@ if (!window._engineStarted) {
 // In your spin handler, REMOVE engine(); call
 elSpin.addEventListener("click", async () => {
     if (spinAnimation) return;
-    if (!window.USER_TEST_MODE && counter_distance > 0) return; // In test mode we ignore countdown
-    
+    if (!window.USER_TEST_MODE) {
+        // Gate: if ticket-only, require at least 1 ticket; else use cooldown
+        if (window.CURRENT_WHEEL_TICKET_ONLY === 'true') {
+            const n = parseInt(window.CURRENT_WHEEL_TICKETS_COUNT || '0', 10) || 0;
+            if (n <= 0) return;
+            window.CURRENT_WHEEL_TICKETS_COUNT = String(Math.max(0, n - 1));
+        } else {
+            if (!window.USER_TEST_MODE && counter_distance > 0) return; // In test mode we ignore countdown
+        }
+    }
+
     // Show loading indicator
     showLoadingIndicator();
     
@@ -321,6 +330,13 @@ elSpin.addEventListener("click", async () => {
         if (targetIndex >= 0 && targetIndex < sectors.length) {
             // REMOVE: engine(); // Don't call engine() here
             spin(targetIndex);
+            // If ticket-only, backend consumes one ticket; reflect new count
+            // In test mode, backend skips consumption, so don't decrement locally
+            if (window.CURRENT_WHEEL_TICKET_ONLY === 'true' && !window.USER_TEST_MODE) {
+                const n = parseInt(window.CURRENT_WHEEL_TICKETS_COUNT || '0', 10) || 0;
+                const newN = Math.max(0, n - 1);
+                window.CURRENT_WHEEL_TICKETS_COUNT = String(newN);
+            }
         } else {
             console.error("Invalid sector index:", targetIndex);
         }

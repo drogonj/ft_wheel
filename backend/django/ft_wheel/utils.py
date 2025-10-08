@@ -38,6 +38,7 @@ def load_wheels(wheel_configs_dir: str):
         slug_raw = data.get('url') or data.get('slug') or fname[len('jackpots_'):-5]
         slug_norm = slug_raw.lower().replace(' ', '_')
         title = data.get('title') or slug_norm.capitalize()
+        ticket_only = bool(data.get('ticket_only', False))
 
         # Support both jackpots and sequence formats
         if 'sequence' in data and isinstance(data['sequence'], list):
@@ -58,7 +59,12 @@ def load_wheels(wheel_configs_dir: str):
                 for _ in range(v.get('number', 1))
             ]
 
-        wheels[slug_norm] = {'title': title, 'sectors': sectors, 'url': slug_norm}
+        wheels[slug_norm] = {
+            'title': title,
+            'sectors': sectors,
+            'url': slug_norm,
+            'ticket_only': ticket_only,
+        }
     return wheels
 
 

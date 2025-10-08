@@ -4,6 +4,7 @@ from django.conf import settings
 from . import wheels_views
 from . import history_views
 from . import control_panel_views
+from . import tickets_views
 
 urlpatterns = [
     # Control panel (admin and moderator access)
@@ -12,6 +13,9 @@ urlpatterns = [
     path('adm/control-panel/jackpot-cooldown/', control_panel_views.update_jackpot_cooldown_api, name='update_jackpot_cooldown_api'),
     path('adm/control-panel/announcement/', control_panel_views.update_announcement_api, name='update_announcement_api'),
     path('adm/control-panel/settings/', control_panel_views.site_settings_api, name='site_settings_api'),
+    # Tickets management (admin only)
+    path('adm/control-panel/tickets/grant/', tickets_views.grant_ticket_api, name='grant_ticket_api'),
+    path('adm/control-panel/tickets/summary/', tickets_views.tickets_summary_api, name='tickets_summary_api'),
     
     # Admin wheel management (superusers only)
     path('adm/wheels/', wheels_views.admin_wheels, name='admin_wheels'),

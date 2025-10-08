@@ -11,7 +11,8 @@ def wheel_list(request):
         wheels_meta.append({
             'slug': slug,
             'title': data.get('title', slug),
-            'version_id': version_ids.get(slug)
+            'version_id': version_ids.get(slug),
+            'ticket_only': bool(data.get('ticket_only', False)),
         })
     # sort by title for consistency
     wheels_meta.sort(key=lambda x: x['title'].lower())

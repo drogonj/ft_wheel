@@ -33,6 +33,9 @@ class ControlPanel {
             textarea.addEventListener('input', this.autoResize);
             this.autoResize.call(textarea);
         });
+
+        // Initial tickets summary load (if container exists)
+        try { refreshTickets(); } catch(_) {}
     }
 
     autoResize() {
@@ -373,4 +376,62 @@ if ('performance' in window) {
             console.log(`Control panel loaded in ${loadTime}ms`);
         }, 0);
     });
+}
+
+// ---- Tickets helpers ----
+async function grantTicket() {
+    const login = document.getElementById('ticket-login')?.value.trim();
+    const wheel = document.getElementById('ticket-wheel')?.value.trim();
+    if (!login || !wheel) {
+        controlPanel.showNotification('Please provide both login and wheel slug', 'error');
+        return;
+    }
+    controlPanel.showLoading();
+    try {
+        const res = await controlPanel.makeRequest('/adm/control-panel/tickets/grant/', 'POST', { login, wheel });
+        if (res.success) {
+            controlPanel.showNotification(`Ticket granted to ${res.ticket.user} for wheel ${res.ticket.wheel}`, 'success');
+            refreshTickets();
+        }
+    } catch (_) {
+        // handled
+    } finally {
+        controlPanel.hideLoading();
+    }
+}
+
+async function refreshTickets() {
+    try {
+        const res = await controlPanel.makeRequest('/adm/control-panel/tickets/summary/', 'GET');
+        if (!res.success) return;
+        const target = document.getElementById('tickets-summary');
+        if (!target) return;
+        const unused = res.unused || [];
+        const recent = res.recent || [];
+        const unusedHtml = unused.length
+            ? unused.map(u => `<li style="display:flex; justify-content:space-between; gap:.5rem;"><span><code>${u.wheel_slug}</code></span><b>${u.count}</b></li>`).join('')
+            : '<li style="opacity:.7">No unused tickets</li>';
+        const recentHtml = recent.length
+            ? recent.map(t => `<li style="margin-bottom:.25rem;">
+                    <div style="display:flex; justify-content:space-between; gap:.5rem;">
+                        <span>#${t.id} ${t.user} → ${t.wheel} ${t.used_at ? '<span style="opacity:.7">(used)</span>' : ''}</span>
+                        <small style="opacity:.7">by ${t.granted_by || 'n/a'}</small>
+                    </div>
+                </li>`).join('')
+            : '<li style="opacity:.7">No recent grants</li>';
+        target.innerHTML = `
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+                <div>
+                    <div style="font-weight:600; margin-bottom:.4rem; opacity:.9;">Unused tickets per wheel</div>
+                    <ul style="list-style:none; padding-left:0; margin:0;">${unusedHtml}</ul>
+                </div>
+                <div>
+                    <div style="font-weight:600; margin-bottom:.4rem; opacity:.9;">Recent grants</div>
+                    <ul style="list-style:none; padding-left:0; margin:0;">${recentHtml}</ul>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        // ignore
+    }
 }

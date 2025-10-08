@@ -27,6 +27,8 @@
             }
             window.CURRENT_WHEEL_SLUG = "{{ wheel_slug }}";
             window.CURRENT_WHEEL_VERSION_ID = "{{ wheel_version_id }}";
+            window.CURRENT_WHEEL_TICKET_ONLY = "{{ wheel_ticket_only|yesno:'true,false' }}";
+            window.CURRENT_WHEEL_TICKETS_COUNT = "{{ wheel_tickets_count|default:0 }}";
         </script>
     </head>
     <body{% if announcement_message %} class="has-announcement"{% endif %}>
