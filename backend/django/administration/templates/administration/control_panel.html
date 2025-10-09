@@ -23,7 +23,7 @@
             </div>
             <div class="navbar-right">
                 <div class="user-info">
-                    <span class="user-name">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+                    <span class="user-name">{{ request.user.login }}</span>
                     <span class="user-role">({{ request.user.get_role_display }})</span>
                 </div>
                 <a href="/" class="btn btn-secondary">Home</a>
@@ -85,7 +85,7 @@
                 </div>
                 <div class="settings-content">
                     <p>When enabled, all users except admins will see a maintenance page.</p>
-                    {% if can_modify %}
+                    {% if user_role == 'admin' %}
                     <div class="form-group">
                         <label for="maintenance-message">Maintenance Message:</label>
                         <textarea id="maintenance-message" rows="3" placeholder="Enter maintenance message...">{{ settings.maintenance_message }}</textarea>
@@ -107,7 +107,7 @@
                 </div>
                 <div class="settings-content">
                     <p>This message appears as a marquee on the homepage.</p>
-                    {% if can_modify %}
+                    {% if user_role == 'admin' %}
                     <div class="form-group">
                         <label for="announcement-message">Announcement Message:</label>
                         <input id="announcement-message" type="text" maxlength="255" value="{{ settings.announcement_message }}" placeholder="Welcome on ft_wheel, have fun !" />
@@ -128,7 +128,7 @@
                 </div>
                 <div class="settings-content">
                     <p>Time users must wait between jackpot attempts.</p>
-                    {% if can_modify %}
+                    {% if user_role == 'admin' %}
                     <div class="form-group">
                         <label for="cooldown-hours">Cooldown (hours):</label>
                         <input type="number" id="cooldown-hours" min="1" max="168" value="{{ stats.jackpot_cooldown_hours }}">
@@ -188,7 +188,7 @@
                 </div>
                 <div class="settings-content">
                     <p>Grant spin tickets to users for specific wheels. Tickets are required for wheels marked as ticket-only.</p>
-                    {% if can_modify %}
+                    {% if user_role == 'admin' or user_role == 'moderator' %}
                     <div class="form-group">
                         <label for="ticket-login">User login:</label>
                         <input type="text" id="ticket-login" placeholder="marvin" />
@@ -217,7 +217,6 @@
                     <div id="tickets-summary" style="max-height: 300px; overflow-y: auto; margin-top: .25rem; font-size: 0.95rem; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: .75rem; background: rgba(255,255,255,0.03)"></div>
                 </div>
             </div>
-        </div>
 
         <!-- Recent Activity -->
         {% if recent_users or recent_errors %}

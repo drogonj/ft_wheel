@@ -30,8 +30,16 @@ class Account(AbstractBaseUser):
     ]
 
     MODERATOR_PERMS = [
-        'administration.history',
-        'administration.add_history_marked',
+        'history_admin',
+        'history_detail_api',
+        'add_history_mark',
+        'control_panel',
+        'site_settings_api',
+        'grant_ticket_api',
+        'ticket_summary_api',
+        'list_tickets_api',
+        'delete_tickets_api',
+        'bypass_maintenance',
     ]
 
     date_joined = models.DateTimeField(verbose_name="date joined", auto_now_add=True)
@@ -91,7 +99,7 @@ class Account(AbstractBaseUser):
         return False
 
     def has_module_perms(self, app_label):
-        if self.is_moderator():
+        if self.is_admin():
             return True
         return ['wheel', 'users'].__contains__(app_label)
     

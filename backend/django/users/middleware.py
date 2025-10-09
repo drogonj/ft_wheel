@@ -65,34 +65,20 @@ class MaintenanceMiddleware:
         # Maintenance mode is enabled
         excluded_routes = [
             '/static/',
+            '/login',
             '/logout',
-            '/admin/',  # Django admin
         ]
-        
-        # Allow admin panel access for admins and moderators
-        admin_routes = [
-            '/adm/',
-        ]
+
+        # Allow admins to access the site normally during maintenance
+        if request.user.is_authenticated and request.user.has_perm('bypass_maintenance'):
+            response = self.get_response(request)
+            return response
 
         # Check if route should be excluded from maintenance
         for excluded in excluded_routes:
             if request.path.startswith(excluded):
                 response = self.get_response(request)
                 return response
-
-        # Check if user is admin/moderator accessing admin panel
-        for admin_route in admin_routes:
-            if request.path.startswith(admin_route):
-                if request.user.is_authenticated and (request.user.is_admin() or request.user.is_moderator()):
-                    response = self.get_response(request)
-                    return response
-                # Non-admin trying to access admin during maintenance
-                break
-
-        # Allow admins to access the site normally during maintenance
-        if request.user.is_authenticated and request.user.is_admin():
-            response = self.get_response(request)
-            return response
 
         # Show maintenance page to all other users
         template = loader.get_template('maintenance.html')

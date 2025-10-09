@@ -328,15 +328,7 @@ elSpin.addEventListener("click", async () => {
             window.CURRENT_WHEEL_VERSION_ID = result.wheel_version_id;
         }
         if (targetIndex >= 0 && targetIndex < sectors.length) {
-            // REMOVE: engine(); // Don't call engine() here
             spin(targetIndex);
-            // If ticket-only, backend consumes one ticket; reflect new count
-            // In test mode, backend skips consumption, so don't decrement locally
-            if (window.CURRENT_WHEEL_TICKET_ONLY === 'true' && !window.USER_TEST_MODE) {
-                const n = parseInt(window.CURRENT_WHEEL_TICKETS_COUNT || '0', 10) || 0;
-                const newN = Math.max(0, n - 1);
-                window.CURRENT_WHEEL_TICKETS_COUNT = String(newN);
-            }
         } else {
             console.error("Invalid sector index:", targetIndex);
         }

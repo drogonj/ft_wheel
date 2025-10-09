@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.utils import timezone
 from django.db.models import Count, Q
 from datetime import datetime, timedelta
@@ -14,22 +14,11 @@ from wheel.models import History
 from .models import SiteSettings
 
 
-def user_can_access_control_panel(user):
-    """Check if user can access control panel"""
-    if not user.is_authenticated:
-        return False
-    return user.is_admin()
-
-def user_can_modify_settings(user):
-    """Check if user can modify site settings"""
-    if not user.is_authenticated:
-        return False
-    return user.is_admin()
-
 @login_required
+@require_GET
 def control_panel_view(request):
     """Main control panel dashboard"""
-    if not user_can_access_control_panel(request.user):
+    if not request.user.has_perm('control_panel'):
         return HttpResponseForbidden("Access denied")
     
     # Get or create site settings
@@ -92,18 +81,17 @@ def control_panel_view(request):
         'stats': stats,
         'recent_users': recent_users,
         'recent_errors': recent_errors,
-        'can_modify': user_can_modify_settings(request.user),
+        'user_role': request.user.role,
     }
     
     return render(request, 'administration/control_panel.html', context)
 
 
 @login_required
-@csrf_protect
 @require_POST
 def toggle_maintenance_api(request):
     """Toggle maintenance mode via API"""
-    if not user_can_modify_settings(request.user):
+    if not request.user.has_perm('modify_site_settings'):
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
     
     try:
@@ -136,11 +124,10 @@ def toggle_maintenance_api(request):
 
 
 @login_required
-@csrf_protect
 @require_POST
 def update_jackpot_cooldown_api(request):
     """Update jackpot cooldown setting"""
-    if not user_can_modify_settings(request.user):
+    if not request.user.has_perm('modify_site_settings'):
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
     
     try:
@@ -170,11 +157,11 @@ def update_jackpot_cooldown_api(request):
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-@require_http_methods(["GET"])
+@require_GET
 @login_required
 def site_settings_api(request):
     """Get current site settings as JSON"""
-    if not user_can_access_control_panel(request.user):
+    if not request.user.has_perm('site_settings_api'):
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
     
     try:
@@ -197,11 +184,10 @@ def site_settings_api(request):
 
 
 @login_required
-@csrf_protect
 @require_POST
 def update_announcement_api(request):
     """Update site-wide announcement message"""
-    if not user_can_modify_settings(request.user):
+    if not request.user.has_perm('modify_site_settings'):
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
     try:

@@ -152,7 +152,6 @@ def time_to_spin_view(request):
 
 
 @login_required
-@csrf_protect
 @require_http_methods(["POST"])
 def change_wheel_config(request):
     try:

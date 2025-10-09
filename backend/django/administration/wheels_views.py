@@ -11,14 +11,6 @@ from ft_wheel.utils import load_wheels, build_wheel_versions
 from .admin_logging import logger as admin_logger
 
 
-def user_can_access_wheels(user):
-    """Check if user can access wheels administration"""
-    return user.is_authenticated and (user.is_admin() or user.is_moderator())
-
-def user_can_modify_wheels(user):
-    """Check if user can modify wheels (create, edit, delete)"""
-    return user.is_authenticated and user.is_admin()
-
 def _get_wheel_file_path(config):
     """Helper to get file path for a wheel config"""
     return os.path.join(settings.WHEEL_CONFIGS_DIR, f'jackpots_{config}.json')
@@ -38,7 +30,7 @@ def _normalize_wheel_name(name):
 @require_GET
 def admin_wheels(request):
     """Main wheels administration view"""
-    if not user_can_access_wheels(request.user):
+    if not request.user.has_perm('admin_wheels'):
         return HttpResponseForbidden("Access denied")
 
     data = {}
@@ -61,7 +53,7 @@ def admin_wheels(request):
 @require_http_methods(["GET", "POST"])
 def edit_wheel(request, config: str):
     """Edit wheel configuration - view and modify sectors"""
-    if not user_can_access_wheels(request.user):
+    if not request.user.has_perm('edit_wheel'):
         return HttpResponseForbidden("Access denied")
     
     if config not in settings.WHEEL_CONFIGS:
@@ -78,10 +70,6 @@ def edit_wheel(request, config: str):
         except Exception as e:
             admin_logger.error(f"Failed to load wheel {config}: {e}")
             return JsonResponse({'error': str(e)}, status=500)
-
-    # POST: Update wheel (requires admin)
-    if not user_can_modify_wheels(request.user):
-        return HttpResponseForbidden("Modification access denied")
     
     try:
         payload = json.loads(request.body)
@@ -198,7 +186,7 @@ def upload_wheel(request):
     application/json body with the wheel data. The JSON must contain at least
     one of: 'sequence' (list) or 'jackpots' (dict). Optional fields: 'url'/'slug', 'title'.
     """
-    if not user_can_modify_wheels(request.user):
+    if not request.user.has_perm('edit_wheel'):
         return HttpResponseForbidden("Modification access denied")
 
     data = None
@@ -289,7 +277,7 @@ def upload_wheel(request):
 @require_POST
 def create_wheel(request):
     """Create a new wheel configuration"""
-    if not user_can_modify_wheels(request.user):
+    if not request.user.has_perm('edit_wheel'):
         return HttpResponseForbidden("Modification access denied")
 
     try:
@@ -332,7 +320,7 @@ def create_wheel(request):
 @require_POST
 def delete_wheel(request, config: str):
     """Delete a wheel configuration"""
-    if not user_can_modify_wheels(request.user):
+    if not request.user.has_perm('edit_wheel'):
         return HttpResponseForbidden("Modification access denied")
     
     if config not in settings.WHEEL_CONFIGS:
@@ -362,7 +350,7 @@ def delete_wheel(request, config: str):
 @require_GET
 def download_wheel(request, config: str):
     """Download wheel configuration as JSON file"""
-    if not user_can_access_wheels(request.user):
+    if not request.user.has_perm('admin_wheels'):
         return HttpResponseForbidden("Access denied")
     
     if config not in settings.WHEEL_CONFIGS:

@@ -37,6 +37,5 @@ class TicketAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'used_at', 'user', 'wheel_slug', 'granted_by')
     list_per_page = 20
 
-
 admin.site.register(User, AccountAdmin)
 admin.site.register(Ticket, TicketAdmin)

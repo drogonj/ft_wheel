@@ -3,7 +3,10 @@
 # # # # # # # # # # # # # # # # # 
 
 # Example of POST /v2/titles_users
-# TODO
+# {
+#   "titles_user[title_id]": 2589,
+#   "titles_user[user_id]": 117200
+# }
 
 # Example of DELETE /v2/titles_users/:id
 # TODO

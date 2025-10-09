@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.http import JsonResponse, HttpResponseForbidden
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_GET, require_POST
 from django.utils import timezone
 from django.db.models import Q
 from wheel.models import History, HistoryMark
@@ -12,19 +12,11 @@ from .admin_logging import logger as admin_logger
 import json
 
 
-def user_can_access_history(user):
-    """Check if user can access history administration"""
-    return user.is_authenticated and (user.is_admin() or user.is_moderator())
-
-def user_can_cancel_history(user):
-    """Check if user can cancel history entries"""
-    return user.is_authenticated and user.is_admin()
-
-
 @login_required
+@require_GET
 def history_admin_view(request):
     """Main history administration view with pagination and filtering"""
-    if not user_can_access_history(request.user):
+    if not request.user.has_perm('history_admin'):
         return HttpResponseForbidden("Access denied")
     
     # Get filter parameters
@@ -74,17 +66,17 @@ def history_admin_view(request):
         'status_filter': status_filter,
         'marked_filter': marked_filter,
         'available_wheels': available_wheels,
-        'user_can_cancel': user_can_cancel_history(request.user),
+        'user_can_cancel': request.user.has_perm('cancel_history_entry'),
     }
     
     return render(request, 'administration/history_admin.html', context)
 
 
 @login_required
-@require_http_methods(["POST"])
+@require_POST
 def add_history_mark(request, history_id):
     """Add a validation mark to a history entry"""
-    if not user_can_access_history(request.user):
+    if not request.user.has_perm('add_history_mark'):
         return JsonResponse({'error': 'Access denied'}, status=403)
     
     history = get_object_or_404(History, id=history_id)
@@ -134,7 +126,7 @@ def add_history_mark(request, history_id):
 @require_http_methods(["POST"])
 def cancel_history_entry(request, history_id):
     """Cancel a history entry by calling its cancel function"""
-    if not user_can_cancel_history(request.user):
+    if not request.user.has_perm('cancel_history_entry'):
         return JsonResponse({'error': 'Access denied'}, status=403)
     
     history = get_object_or_404(History, id=history_id)
@@ -176,9 +168,10 @@ def cancel_history_entry(request, history_id):
 
 
 @login_required
+@require_GET
 def history_detail_api(request, history_id):
     """Get detailed information about a history entry"""
-    if not user_can_access_history(request.user):
+    if not request.user.has_perm('history_detail_api'):
         return JsonResponse({'error': 'Access denied'}, status=403)
     
     history = get_object_or_404(History, id=history_id)

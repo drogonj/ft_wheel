@@ -4,6 +4,8 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST, require_GET
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.core.paginator import Paginator
+from django.db.models import Q
 
 from .admin_logging import logger as admin_logger
 from wheel.models import Ticket
@@ -11,15 +13,10 @@ from wheel.models import Ticket
 User = get_user_model()
 
 
-def user_can_manage_tickets(user):
-    return user.is_authenticated and user.is_admin()
-
-
 @login_required
-@csrf_protect
 @require_POST
 def grant_ticket_api(request):
-    if not user_can_manage_tickets(request.user):
+    if not request.user.has_perm('grant_ticket_api'):
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
     try:
@@ -42,6 +39,8 @@ def grant_ticket_api(request):
     wheels = getattr(settings, 'WHEEL_CONFIGS', {})
     if wheel_slug not in wheels:
         return JsonResponse({'success': False, 'error': 'Unknown wheel slug'}, status=400)
+    if not wheels[wheel_slug].get('ticket_only', False):
+        return JsonResponse({'success': False, 'error': 'Wheel is not ticket-only'}, status=400)
 
     try:
         user = User.objects.get(login=login)
@@ -57,7 +56,7 @@ def grant_ticket_api(request):
 @login_required
 @require_GET
 def tickets_summary_api(request):
-    if not user_can_manage_tickets(request.user):
+    if not request.user.has_perm('ticket_summary_api'):
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
 
     # Return counts per wheel (unused only) and last 20 granted
@@ -70,7 +69,7 @@ def tickets_summary_api(request):
     )
     recent = (
         Ticket.objects.select_related('user', 'granted_by')
-        .order_by('-created_at')[:20]
+        .order_by('-created_at')[:50]
     )
     return JsonResponse({
         'success': True,
