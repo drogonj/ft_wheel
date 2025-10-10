@@ -66,7 +66,8 @@ class AsyncIntraAPI:
                 data={
                     "grant_type": "client_credentials",
                     "client_id": self.client_id,
-                    "client_secret": self.client_secret
+                    "client_secret": self.client_secret,
+                    "scope": "public profile tig"
                 },
                 timeout=10.0
             )
