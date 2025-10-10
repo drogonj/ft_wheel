@@ -174,7 +174,7 @@ body {
     transition: all 0.3s ease;
     min-width: 0;
     background-color: var(--bg-header);
-    color: var(--text-primary);
+    color: white;
 }
 
 .filter-group input:focus,
@@ -182,7 +182,7 @@ body {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 0.125rem rgba(59, 130, 246, 0.3);
-    background-color: var(--bg-panel);
+    background-color: var(--bg-secondary);
 }
 
 .filter-group input::placeholder {

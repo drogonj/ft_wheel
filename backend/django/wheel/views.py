@@ -133,8 +133,11 @@ def spin_view(request):
             success=success,
             user=request.user
         )
+        if not success:
+            return JsonResponse({'error': 'server_error', 'message': 'An error occurred while processing your spin. Please contact an admin.'}, status=500)
     except Exception as e:
         logger.error("Unexpected error while saving history or handling jackpots: %s", e)
+        return JsonResponse({'error': 'server_error', 'message': 'An error occurred while processing your spin. Please contact an admin.'}, status=500)
         
     logger.info(f"Jackpots! {request.user.login} - {config_type} - {sectors[result]}")
 

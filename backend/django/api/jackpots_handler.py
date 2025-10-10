@@ -93,7 +93,7 @@ def handle_jackpots(user, jackpot) -> tuple[bool, str, dict]:
         logger.info(f"{msg}\n{str(data)}")
         return True, msg, data
     except Exception as e:
-        logger.error(f"Unexpected error in handle_jackpot '{jackpot.get('label', 'unknown')}': {e}")
+        logger.error(f"Error in handle_jackpot '{jackpot.get('label', 'unknown')}': {e}")
         return False, str(e), {}
 
 
@@ -132,5 +132,5 @@ def cancel_jackpot(user: object, function_name: str, r_data: dict) -> tuple[bool
         logger.info(f"Cancellation succeeded: '{function_name} {user.login} {r_data}' -> {msg}\n{str(data)}")
         return True, msg, data
     except Exception as e:
-        logger.error(f"Unexpected error in cancel_jackpot '{function_name} {user.login} {r_data}': {e}")
+        logger.error(f"Error in cancel_jackpot '{function_name} {user.login} {r_data}': {e}")
         return False, str(e), {}

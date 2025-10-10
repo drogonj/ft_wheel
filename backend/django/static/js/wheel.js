@@ -291,6 +291,7 @@ elSpin.addEventListener("click", async () => {
     showLoadingIndicator();
     
     try {
+        // Send POST request to /spin/ endpoint
         const response = await fetch(`/spin/`, {
             method: 'POST',
             headers: {
@@ -300,23 +301,29 @@ elSpin.addEventListener("click", async () => {
             body: JSON.stringify({ wheel_version_id: window.CURRENT_WHEEL_VERSION_ID })
         });
 
+        // Check for errors
         if (!response.ok) {
             hideLoadingIndicator();
-            
+            init_time_to_spin();
             if (response.status === 409) {
                 // Outdated wheel configuration
                 try {
                     const data = await response.json();
                     console.warn('Wheel configuration outdated. Expected version', data.expected_version);
                 } catch(e) {}
-                alert('Wheel updated by admin. Reloading page...');
+                alert('Wheel has been updated. Reloading page...');
                 window.location.reload();
+                return;
+            }
+            if (response.status === 500) {
+                alert('An error occurred while processing your spin.\n\nPlease contact an admin.\n\nYou may be refunded your ticket 🎟️ or your cooldown.');
                 return;
             }
             console.error(`Can't spin wheel: ${response.status}`);
             return;
         }
 
+        // Parse JSON response
         const result = await response.json();
         
         // Hide loading indicator after successful response
