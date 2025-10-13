@@ -2,6 +2,36 @@
 
 This document provides detailed configuration instructions for advanced ft_wheel deployment scenarios, including user management, content configuration, and system administration.
 
+### Project Structure
+
+```
+ft_wheel/
+├── backend/
+│   ├── django/
+│   │   ├── administration/        # Administrative interface and controls
+│   │   ├── api/                   # Reward system and API handlers
+│   │   │   ├── builtins/          # Built-in reward functions
+│   │   │   └── mods/              # Custom reward modules
+│   │   ├── data/                  # Configuration files and static data
+│   │   │   ├── patch_notes.json   # Version history and updates
+│   │   │   ├── superusers.json    # Administrative user definitions
+│   │   │   └── wheel_configs/     # Wheel configuration files
+│   │   ├── ft_wheel/              # Core Django project configuration
+│   │   ├── static/                # CSS, JavaScript, and asset files
+│   │   ├── users/                 # User authentication and management
+│   │   └── wheel/                 # Wheel mechanics and game logic
+│   ├── Dockerfile                 # Backend container configuration
+│   ├── requirements.txt           # Python dependencies
+│   └── start.sh                   # Container startup script
+├── postgres/
+│   ├── Dockerfile                 # Database container configuration
+│   └── export_credentials.sh      # Database backup utilities
+├── secrets/                       # Environment variables and credentials
+├── docs/                          # Project documentation
+├── docker-compose.yaml            # Multi-container orchestration
+└── Makefile                       # Development and deployment commands
+```
+
 ### Creating Superusers
 
 Superusers are created through the `superusers.json` configuration file located at `backend/django/data/superusers.json`.
@@ -236,11 +266,9 @@ Each wheel configuration file follows this structure:
    - Configure `ticket_only` as needed
 4. Restart the application to load the new wheel
 
-
 **For more details on reward functions, refer to the [REWARDS_OPTIONS](./REWARDS_OPTIONS.md) documentation.**
 
 **For more details on wheel administration, refer to the [ADMINISTRATION](./ADMINISTRATION.md) documentation.**
-
 
 ## System Configuration
 
@@ -278,7 +306,6 @@ The system maintains comprehensive logs:
 - **API Requests**: External API interactions
 
 Logs are stored in the `saved-logs` Docker volume and accessible through the container file system.
-
 
 ## Security Considerations
 
