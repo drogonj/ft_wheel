@@ -5,7 +5,7 @@ services:
     networks:
       - pg-network
     volumes:
-      - jackpots-logs:/var/log/ft_wheel
+      - saved-logs:/var/log/ft_wheel
       - wheels-configs:/backend/django/data/wheel_configs
     environment:
       - DEBUG=${DEBUG}
@@ -53,7 +53,7 @@ volumes:
   # Contain Database data
   postgres-data:
   # Contain logs for example: Intra logs, Admin logs
-  jackpots-logs:
+  saved-logs:
   # Contain wheel configurations
   wheels-configs:
 

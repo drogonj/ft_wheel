@@ -22,7 +22,7 @@ help:
 	@echo "    up              Start the project"
 	@echo "    down            Stop the project"
 	@echo "    logs            Show logs"
-	@echo "    re              Full restart (with snapshot backup)"
+	@echo "    re              Full restart & cleaning (with snapshot backup)"
 	@echo ""
 	@echo "  💾 Snapshot Management:"
 	@echo "    snapshot        Create snapshots of all volumes"

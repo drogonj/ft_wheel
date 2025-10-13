@@ -26,7 +26,7 @@ Tested on 2 piscines (around 110 persons per piscine) at 42 Mulhouse. The wheel,
 
 ## Summary
 
-1. Basic installation
+1. [Basic installation](./BASIC_INSTALLATION.md)
 2. Advanced configuration
 3. Administration
 4. Rewards options
@@ -34,9 +34,9 @@ Tested on 2 piscines (around 110 persons per piscine) at 42 Mulhouse. The wheel,
 ## Preview
 
 ![wheel.png](assets/wheel.png "Wheel")
-![wheel_history.png](assets/wheel_history.png "Wheel History")
-![admin_history.png](assets/admin_history.png "Admin History")
-![wheel_history_detailled.png](assets/admin_history_detailled.png "Wheel History Detailled")
-![control_pannel.png](assets/control_pannel.png "Control Pannel")
+![history.png](assets/history.png "History")
+![history_admin.png](assets/history_admin.png "Admin History")
+![history_detailled_admin.png](assets/history_detailled_admin.png "Wheel History Detailled")
+![control_panel.png](assets/control_panel.png "Control Panel")
 ![wheel_admin.png](assets/wheel_admin.png "Wheel Admin")
 ![django_admin.png](assets/django_admin.png "Django Admin")
