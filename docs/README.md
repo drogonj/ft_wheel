@@ -27,9 +27,9 @@ Tested on 2 piscines (around 110 persons per piscine) at 42 Mulhouse. The wheel,
 ## Summary
 
 1. [Basic installation](./BASIC_INSTALLATION.md)
-2. Advanced configuration
-3. Administration
-4. Rewards options
+2. [Advanced configuration](./ADVANCED_CONFIGURATION.md)
+3. [Administration](./ADMINISTRATION.md)
+4. [Rewards options](./REWARDS_OPTIONS.md)
 
 ## Preview
 
