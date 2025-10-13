@@ -195,3 +195,8 @@ Administrative control over user accounts and permissions:
    - Check disk space availability
 
 For advanced configuration topics and emergency procedures, refer to [ADVANCED_CONFIGURATION](./ADVANCED_CONFIGURATION.md).
+
+
+## Next Steps
+
+For Rewards options, refer to [REWARDS_OPTIONS](./REWARDS_OPTIONS.md).

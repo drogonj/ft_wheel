@@ -343,3 +343,7 @@ make restore-from FILE=backup_filename.tar.gz
 ```
 
 For additional deployment and configuration guidance, refer to the [BASIC_INSTALLATION](./BASIC_INSTALLATION.md) guide.
+
+## Next Steps
+
+For Administration options, refer to [ADMINISTRATION](./ADMINISTRATION.md).
