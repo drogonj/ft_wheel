@@ -129,7 +129,7 @@ Manage access to premium or restricted wheels:
 - **Monitoring:** Track ticket usage and status
 - **Management:** View and delete tickets as needed (Django Admin Panel only)
 
-![Control Panel Interface](./assets/control_pannel.png)
+![Control Panel](./assets/control_panel.png)
 
 ### Operational Notes
 
