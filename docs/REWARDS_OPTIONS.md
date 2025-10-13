@@ -1,108 +1,105 @@
-# REWARDS OPTIONS
+# Reward Functions Configuration
 
-This document explains the reward function system for ft_wheel, including how to configure existing rewards and create custom reward functions.
+This document provides comprehensive information for configuring and extending the ft_wheel reward system, including available functions and custom development guidelines.
 
-## Table of Contents
+## System Architecture
 
-- [Overview](#overview)
-- [Auto-Loading Mechanism](#auto-loading-mechanism)
-- [Configuration Structure](#configuration-structure)
-- [Available Builtin Functions](#available-builtin-functions)
-- [Creating Custom Functions](#creating-custom-functions)
-- [Function Signature Requirements](#function-signature-requirements)
-- [Template Variables](#template-variables)
-- [Error Handling](#error-handling)
-- [Examples](#examples)
+The ft_wheel reward system employs a modular function loading architecture that dynamically imports reward functions from designated directories:
 
-## Overview
+- **`api/builtins/`**: Core reward functions provided with the system
+- **`api/mods/`**: Custom reward functions developed by administrators
 
-The ft_wheel reward system uses an auto-loading mechanism that dynamically imports reward functions from two directories:
+Each reward function operates with a paired cancellation function to ensure transaction rollback capabilities. The system performs validation checks during initialization and provides comprehensive error reporting for configuration issues.
 
-- **`api/builtins/`** - Pre-built reward functions provided with the system
-- **`api/mods/`** - Custom reward functions created by administrators
+### Function Loading Process
 
-Each reward function must have a corresponding cancel function for rollback functionality. The system validates function availability at startup and provides detailed error messages for missing or invalid functions.
+The system performs automatic function discovery and validation through these stages:
 
-## Auto-Loading Mechanism
+1. **Path Resolution**: Converts configuration paths to full module references
+2. **Dynamic Import**: Loads modules using Python's import system
+3. **Function Validation**: Verifies existence of both primary and cancellation functions
+4. **Error Handling**: Reports detailed diagnostics for configuration problems
 
-The reward system automatically loads functions using the following process:
+#### Supported Path Formats
 
-1. **Function Path Resolution**: Converts function paths like `"builtins.default"` to full module paths `"api.builtins.default"`
-2. **Module Import**: Dynamically imports the specified module using Python's `importlib`
-3. **Function Validation**: Ensures both `function` and `cancel_function` exist and are callable
-4. **Error Reporting**: Provides detailed error messages for missing modules or functions
-
-### Supported Path Formats
+Function references in wheel configurations use dot notation for module specification:
 
 ```json
 {
-  "function": "builtins.title",        // → api.builtins.title
-  "function": "mods.custom_reward"     // → api.mods.custom_reward
+  "function": "builtins.title",        
+  "function": "mods.custom_reward"     
 }
 ```
 
-## Configuration Structure
+These paths resolve to complete module references: `api.builtins.title` and `api.mods.custom_reward` respectively.
 
-Rewards are configured in JSON files located in `wheel_configs/` with the following structure:
+## Reward Configuration Format
+
+Reward definitions are specified within wheel configuration files located in `backend/django/data/wheel_configs/`. Each reward entry follows this structure:
 
 ```json
 {
-  "Reward Name": {
-    "color": "#FF0000",
-    "number": 3,
-    "message": "You won the reward!",
-    "function": "builtins.function_name",
-    "args": {
-      "parameter1": "value1",
-      "parameter2": "value2"
+  "sequence": [
+    {
+      "label": "Reward Name",
+      "color": "#FF0000",
+      "message": "You won the reward!",
+      "function": "builtins.function_name",
+      "args": {
+        "parameter1": "value1",
+        "parameter2": "value2"
+      }
     }
-  }
+  ]
 }
 ```
 
 ### Configuration Parameters
 
-| Parameter | Type   | Description                                    | Required |
-|-----------|--------|------------------------------------------------|----------|
-| `color`   | string | Hex color code for UI display                  | Yes      |
-| `number`  | int    | Frequency/weight of the reward in the wheel   | Yes      |
-| `message` | string | Message displayed to the user upon winning     | Yes      |
-| `function`| string | Path to the reward function                    | Yes      |
-| `args`    | object | Arguments passed to the reward function        | No       |
+| Parameter  | Type   | Description                                      | Required |
+| ------------ | -------- | -------------------------------------------------- | ---------- |
+| `label`    | string | Display name for the reward segment              | Yes      |
+| `color`    | string | Hexadecimal color code for visual representation | Yes      |
+| `message`  | string | User notification message upon winning           | Yes      |
+| `function` | string | Module path to the reward function               | Yes      |
+| `args`     | object | Function-specific parameters                     | No       |
 
-## Available Builtin Functions
+## Available Reward Functions
 
-### 1. Default (`builtins.default`)
+### Core Functions
 
-Basic reward function for testing and fallback scenarios.
+#### Default Function (`builtins.default`)
 
-**Arguments**: None required
+Provides a basic reward implementation for testing and development purposes.
 
-**Example**:
+**API Requirements**: None  
+**Parameters**: No arguments required
+
 ```json
-"Test Reward": {
+{
+  "label": "Test Reward",
   "color": "#808080",
-  "number": 10,
   "message": "You won a test reward!",
   "function": "builtins.default"
 }
 ```
 
-### 2. Title (`builtins.title`)
+#### Title Assignment (`builtins.title`)
 
-Awards an existing 42 Intranet title to the user.
+Grants existing 42 Intranet titles to users through the institutional API.
 
-**Required Permissions**: Advanced Tutor
+**API Requirements**: Advanced Tutor permissions  
+**Parameters**:
 
-**Arguments**:
-- `title_id` (int): ID of the existing title to award
+| Parameter  | Type | Description                    | Required |
+| ------------ | ------ | -------------------------------- | ---------- |
+| `title_id` | int  | Existing title identifier      | Yes      |
 
-**Example**:
 ```json
-"Title Reward": {
+{
+  "label": "Title Award",
   "color": "#800080",
-  "number": 4,
-  "message": "You won the title '{title_name}'!",
+  "message": "You earned a special title!",
   "function": "builtins.title",
   "args": {
     "title_id": 123
@@ -110,73 +107,71 @@ Awards an existing 42 Intranet title to the user.
 }
 ```
 
-### 3. Coalition Points (`builtins.coa_points`)
+#### Coalition Points (`builtins.coa_points`)
 
-Adds or removes coalition points from the user's coalition.
+Modifies coalition point balances for user coalitions through the 42 API system.
 
-**Required Permissions**: Advanced Staff
-
-**Arguments**:
-- `amount` (int): Points to add (positive) or remove (negative)
-- `reason` (string, optional): Reason for the points change
-
+**API Requirements**: Advanced Staff permissions  
 **Template Variables**: `{login}`
 
-**Example**:
+| Parameter | Type   | Description                              | Required |
+| ----------- | -------- | ------------------------------------------ | ---------- |
+| `amount`  | int    | Points modification (positive/negative)  | Yes      |
+| `reason`  | string | Transaction description                  | No       |
+
 ```json
-"Coalition Points": {
+{
+  "label": "Coalition Boost",
   "color": "#FF0000",
-  "number": 3,
-  "message": "You won 5 coalition points!",
+  "message": "Your coalition earned bonus points!",
   "function": "builtins.coa_points",
   "args": {
     "amount": 5,
-    "reason": "{login} won 5 coalition points"
+    "reason": "{login} earned bonus coalition points"
   }
 }
 ```
 
-### 4. Wallets (`builtins.wallets`)
+#### Wallet Transactions (`builtins.wallets`)
 
-Adds or removes wallet credits from the user's account.
+Processes wallet credit transactions for user accounts through the financial API.
 
-**Required Permissions**: Transactions Manager
-
-**Arguments**:
-- `amount` (int): Wallets to add (positive) or remove (negative)
-- `reason` (string, optional): Reason for the transaction
-
+**API Requirements**: Transactions Manager permissions  
 **Template Variables**: `{login}`, `{amount}`
 
-**Example**:
+| Parameter | Type   | Description                         | Required |
+| ----------- | -------- | ------------------------------------- | ---------- |
+| `amount`  | int    | Credit modification amount          | Yes      |
+| `reason`  | string | Transaction description             | No       |
+
 ```json
-"Wallet Reward": {
+{
+  "label": "Wallet Bonus",
   "color": "#00FF00",
-  "number": 2,
-  "message": "You won 10 wallets!",
+  "message": "Your wallet has been credited!",
   "function": "builtins.wallets",
   "args": {
     "amount": 10,
-    "reason": "{login} won {amount} wallets"
+    "reason": "{login} received {amount} wallet credits"
   }
 }
 ```
 
-### 5. Unique Group (`builtins.unique_group`)
+#### Exclusive Group Assignment (`builtins.unique_group`)
 
-Awards a group that can only be held by one user at a time. When awarded, automatically removes the group from any current holder.
+Manages exclusive group memberships where only one user can hold the group at any time. Automatically transfers ownership from previous holders.
 
-**Required Permissions**: Advanced Tutor
+**API Requirements**: Advanced Tutor permissions
 
-**Arguments**:
-- `group_id` (int): ID of the existing group to award
+| Parameter  | Type | Description                      | Required |
+| ------------ | ------ | ---------------------------------- | ---------- |
+| `group_id` | int  | Existing group identifier        | Yes      |
 
-**Example**:
 ```json
-"Unique Group": {
+{
+  "label": "Elite Status",
   "color": "#FFD700",
-  "number": 1,
-  "message": "You won the unique group '{group_name}'!",
+  "message": "You achieved elite status!",
   "function": "builtins.unique_group",
   "args": {
     "group_id": 561
@@ -184,41 +179,40 @@ Awards a group that can only be held by one user at a time. When awarded, automa
 }
 ```
 
-### 6. TIG (Travaux d'Intérêt Général) (`builtins.tig`)
+#### Community Service Assignment (`builtins.tig`)
 
-Assigns community service hours to the user.
+Issues community service requirements through the institutional disciplinary system.
 
-**Required Permissions**: Basic Staff / Advanced Staff
-
-**Arguments**:
-- `duration` (string): Duration of the TIG (`"2h"`, `"4h"`, or `"8h"`)
-- `reason` (string, optional): Reason for assigning the TIG
-- `occupation` (string, optional): Description of the community service task
-
+**API Requirements**: Basic Staff or Advanced Staff permissions  
 **Template Variables**: `{login}`, `{duration}`
 
-**Example**:
+| Parameter    | Type   | Description                            | Required |
+| -------------- | -------- | ---------------------------------------- | ---------- |
+| `duration`   | string | Service duration: "2h", "4h", or "8h" | Yes      |
+| `reason`     | string | Assignment justification               | No       |
+| `occupation` | string | Service task description               | No       |
+
 ```json
-"TIG Assignment": {
-  "color": "#0000FF",
-  "number": 1,
-  "message": "You received community service!",
+{
+  "label": "Community Service",
+  "color": "#0000FF", 
+  "message": "Community service has been assigned.",
   "function": "builtins.tig",
   "args": {
     "duration": "2h",
-    "reason": "{login} won community service",
-    "occupation": "Clean the keyboards"
+    "reason": "Wheel assignment for {login}",
+    "occupation": "Laboratory maintenance duties"
   }
 }
 ```
 
-## Creating Custom Functions
+## Custom Function Development
 
-Custom reward functions should be placed in the `api/mods/` directory and follow the established patterns.
+Custom reward functions extend system capabilities through modules placed in the `api/mods/` directory. These functions integrate with the same infrastructure as built-in rewards.
 
-### 1. Create Module File
+### Module Creation
 
-Create a new Python file in `api/mods/` (e.g., `custom_reward.py`):
+Develop custom functions by creating Python modules in `api/mods/`. Each module must implement both primary and cancellation functions.
 
 ```python
 def custom_reward(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
@@ -283,14 +277,14 @@ def cancel_custom_reward(api_intra: object, user: object, args: dict) -> tuple[b
         return False, f"Error canceling reward: {e}", {}
 ```
 
-### 2. Configure Custom Reward
+### Integration Configuration
 
-Add the custom reward to your wheel configuration:
+Register custom functions in wheel configurations using the `mods` namespace:
 
 ```json
-"Custom Reward": {
+{
+  "label": "Custom Reward",
   "color": "#FF6B6B",
-  "number": 5,
   "message": "You won a custom reward!",
   "function": "mods.custom_reward",
   "args": {
@@ -299,99 +293,112 @@ Add the custom reward to your wheel configuration:
 }
 ```
 
-## Function Signature Requirements
+## Function Specification
 
-All reward functions must follow these requirements:
+### Required Function Signatures
 
-### Function Signature
+All reward functions must implement standardized signatures for system compatibility:
 
+**Primary Function**:
 ```python
 def function_name(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
 ```
 
-### Cancel Function Signature
-
+**Cancellation Function**:
 ```python
 def cancel_function_name(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
 ```
 
-### Parameters
+### Parameter Specifications
 
-- **`api_intra`**: IntraAPI instance for making 42 API calls
-- **`user`**: User model instance with properties:
-  - `.login` - User's 42 login
-  - `.intra_id` - User's 42 Intranet ID
-  - `.id` - Internal database ID
-- **`args`**: Dictionary containing arguments from reward configuration
+| Parameter    | Type   | Description                                    |
+| -------------- | -------- | ------------------------------------------------ |
+| `api_intra`  | object | 42 API interface for institutional operations  |
+| `user`       | object | User model with `.login`, `.intra_id`, `.id` |
+| `args`       | dict   | Configuration parameters from wheel definition |
 
-### Return Value
+### Return Value Structure
 
-Both functions must return a tuple with:
-- **`success`** (bool): Whether the operation succeeded
-- **`message`** (str): Human-readable result message
-- **`data`** (dict): Response data (used for cancellation)
+Functions must return a three-element tuple containing:
 
-## Template Variables
+| Element   | Type   | Purpose                                  |
+| ----------- | -------- | ------------------------------------------ |
+| `success` | bool   | Operation completion status              |
+| `message` | string | Human-readable result description        |
+| `data`    | dict   | Response data for cancellation reference |
 
-Template variables can be used in string arguments and are automatically replaced:
+### Template Variable System
 
-| Variable     | Description              | Available In           |
-|--------------|--------------------------|------------------------|
-| `{login}`    | User's 42 login          | All functions          |
-| `{amount}`   | Amount value             | `wallets`              |
-| `{duration}` | TIG duration             | `tig`                  |
+String parameters support dynamic replacement variables for personalization and context:
 
-**Example Usage**:
-```json
-"reason": "{login} won {amount} coalition points on {date}"
-```
+| Variable     | Description                  | Function Availability      |
+| -------------- | ------------------------------ | ---------------------------- |
+| `{login}`    | User's 42 institutional ID  | Universal                  |
+| `{amount}`   | Numerical transaction value  | Wallet and point functions |
+| `{duration}` | Time period specification    | Community service function |
 
-## Error Handling
-
-The system provides comprehensive error handling:
-
-### Function Loading Errors
-
-- **Module Not Found**: When the specified module doesn't exist
-- **Function Not Found**: When the function doesn't exist in the module
-- **Import Errors**: When the module has syntax or import errors
-
-### Runtime Errors
-
-- **Validation Errors**: Invalid arguments or missing required parameters
-- **API Errors**: Failed 42 Intranet API calls
-- **Permission Errors**: Insufficient API permissions
-
-### Error Response Format
-
-```python
-return False, "Error message explaining what went wrong", {}
-```
-
-## Examples
-
-### Example 1: Simple Points Reward
+#### Usage Example
 
 ```json
-"Lucky Points": {
-  "color": "#4ECDC4",
-  "number": 8,
-  "message": "You earned bonus coalition points!",
-  "function": "builtins.coa_points",
+{
   "args": {
-    "amount": 3,
-    "reason": "Lucky wheel spin by {login}"
+    "reason": "Reward granted to {login} for {amount} credits"
   }
 }
 ```
 
-### Example 2: Title Collection
+## Error Management
+
+The system implements comprehensive error handling across multiple operational layers.
+
+### Configuration Errors
+
+| Error Type          | Description                              | Resolution                    |
+| --------------------- | ------------------------------------------ | ------------------------------- |
+| **Module Import**   | Specified module cannot be loaded       | Verify module path and syntax |
+| **Function Missing** | Required function not found in module   | Implement missing functions   |
+| **Syntax Errors**   | Module contains Python syntax problems  | Fix code syntax issues        |
+
+### Runtime Error Handling
+
+| Error Category      | Cause                                  | System Response            |
+| --------------------- | ---------------------------------------- | ---------------------------- |
+| **Validation**      | Invalid or missing required parameters | Return descriptive error   |
+| **API Failure**     | 42 Intranet API communication issues  | Log error and return false |
+| **Permission**      | Insufficient API access privileges     | Report permission denial   |
+
+### Error Response Protocol
+
+All functions must return standardized error responses:
+
+```python
+return False, "Descriptive error message", {}
+```
+
+## Configuration Examples
+
+### Coalition Point Rewards
 
 ```json
-"Achievement Unlocked": {
-  "color": "#9B59B6",
-  "number": 2,
-  "message": "You unlocked a special achievement!",
+{
+  "label": "Coalition Boost",
+  "color": "#4ECDC4",
+  "message": "Your coalition earned bonus points!",
+  "function": "builtins.coa_points",
+  "args": {
+    "amount": 3,
+    "reason": "Wheel victory by {login}"
+  }
+}
+```
+
+### Title Achievement System
+
+```json
+{
+  "label": "Distinguished Achievement",
+  "color": "#9B59B6", 
+  "message": "You earned a distinguished title!",
   "function": "builtins.title",
   "args": {
     "title_id": 789
@@ -399,33 +406,33 @@ return False, "Error message explaining what went wrong", {}
 }
 ```
 
-### Example 3: Economic Reward
+### Economic Incentives
 
 ```json
-"Wallet Bonus": {
+{
+  "label": "Financial Bonus",
   "color": "#2ECC71",
-  "number": 6,
-  "message": "Your wallet has been credited!",
+  "message": "Your account has been credited!",
   "function": "builtins.wallets",
   "args": {
     "amount": 15,
-    "reason": "Wheel spin reward for {login}"
+    "reason": "Performance bonus for {login}"
   }
 }
 ```
 
-### Example 4: Consequence Reward
+### Disciplinary Actions
 
 ```json
-"Community Service": {
+{
+  "label": "Community Contribution",
   "color": "#E74C3C",
-  "number": 1,
-  "message": "Time to contribute to the community!",
+  "message": "Community service assignment received.",
   "function": "builtins.tig",
   "args": {
     "duration": "2h",
-    "reason": "Wheel spin consequence",
-    "occupation": "Organize the common areas"
+    "reason": "Wheel assignment",
+    "occupation": "Common area maintenance"
   }
 }
 ```
