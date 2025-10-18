@@ -9,13 +9,15 @@ User = get_user_model()
 
 # Opening & extracting data/superusers.json
 # Expect this format :
-#{
-#     "superusers" : {
-#        "ngalzand" : {
-#            "testmode": true
+# {
+#      "superusers" : {
+#        "your_login" : {
+#           "intra_id": your_intra_id,
+#           "testmode": true,
+#           "role": "admin"
 #        }
-#     }
-#}
+#      }
+# }
 try:
     with open('/backend/django/data/superusers.json', 'r') as json_file:
         data = json.load(json_file)
