@@ -1,4 +1,4 @@
-### Currently in the testing phase.
+### Currently in testing phase.
 
 # 🎡 FT_WHEEL
 
@@ -42,3 +42,11 @@ Tested on 2 piscines (around 110 persons per piscine) at 42 Mulhouse. The wheel,
 ![control_panel.png](assets/control_panel.png "Control Panel")
 ![wheel_admin.png](assets/wheel_admin.png "Wheel Admin")
 ![django_admin.png](assets/django_admin.png "Django Admin")
+
+## Note
+
+ft_wheel was thinked to be lightweight, so it contain only a Django and a postgresql database. Feel free to fork the projcet and add more features like a real monitoring system, a reverse-proxy, a caching system, ...
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
