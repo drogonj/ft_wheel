@@ -43,9 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'daphne',
     'django.contrib.staticfiles',
-    'api',
     'users',
     'wheel',
+    'api',
     'administration',
 ]
 

@@ -62,6 +62,15 @@ class History(models.Model):
         verbose_name_plural = "Histories"
 
 
+
+class TicketManager(models.Manager):
+    def unused_tickets(self, user, wheel_slug):
+        return self.filter(user=user, wheel_slug=wheel_slug, used_at__isnull=True)
+
+    def count_unused(self, user, wheel_slug):
+        return self.unused_tickets(user, wheel_slug).count()
+
+
 class Ticket(models.Model):
     """Represents a spin ticket grant. A ticket allows one spin regardless of cooldown.
     If a wheel is marked as ticket_only, user must have at least one unused ticket for that wheel.

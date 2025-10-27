@@ -9,6 +9,7 @@ import os, json
 
 from ft_wheel.utils import load_wheels, build_wheel_versions
 from .admin_logging import logger as admin_logger
+from wheel.models import Ticket
 
 
 def _get_wheel_file_path(config):
@@ -341,6 +342,9 @@ def delete_wheel(request, config: str):
         fallback = next(iter(settings.WHEEL_CONFIGS.keys()), None)
         request.session['wheel_config_type'] = fallback
     
+    # Remove all tickets linked to this wheel
+    Ticket.objects.filter(wheel_slug=config).delete()
+
     versions = _reload_wheels_and_versions()
     admin_logger.info(f"wheel_delete by={request.user.login} slug={config}")
     return JsonResponse({'status': 'deleted', 'name': config})

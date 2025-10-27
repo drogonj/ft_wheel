@@ -1,4 +1,7 @@
 from api.models import UniqueGroupOwner
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Give or take a unique group to a user
@@ -36,6 +39,19 @@ from api.models import UniqueGroupOwner
 
 # Intra Required Permissions: Advanced Tutor
 
+def _gu_group_id(gu: dict) -> int | None:
+    try:
+        # Preferred nested shape
+        nested = gu.get('group') or {}
+        nid = nested.get('id')
+        if isinstance(nid, int):
+            return nid
+    except Exception:
+        pass
+    # Fallback flat shape (if ever provided)
+    val = gu.get('group_id')
+    return val if isinstance(val, int) else None
+
 
 def unique_group(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
     """Give the unique group to a user, removing it from any other user who has it.
@@ -64,27 +80,39 @@ def unique_group(api_intra: object, user: object, args: dict) -> tuple[bool, str
         return False, "Invalid or missing group ID", {}
 
     # Get current owner of the unique group from UniqueGroupOwner table
-    current_owner = UniqueGroupOwner.objects.filter(group_id=group_id).first()
-    if current_owner:
-        current_owner_id = current_owner.owner_user_id
+    current_owner_unique_group = UniqueGroupOwner.objects.filter(group_id=group_id).first()
+    if current_owner_unique_group:
+        current_owner_id = current_owner_unique_group.owner_user_id
+        # Ensure current_owner exist in DB and retrieve its intra_id
+        current_owner = User.objects.filter(id=current_owner_id).first()
+        if current_owner:
+            current_owner_intra_id = current_owner.intra_id
+        else:
+            current_owner_intra_id = None
     else:
         current_owner_id = None
+        current_owner_intra_id = None
 
-    if current_owner_id:
+    if current_owner_id and current_owner_intra_id:
         # If the user already has the group, do nothing
         if current_owner_id == user.id:
             return True, "User already has the unique group", {}
         
         # Be sure the current owner still has the group
-        success, msg, data = api_intra.request(method='GET', url=f'/v2/users/{current_owner_id}/groups_users', headers={})
+        success, msg, data = api_intra.request(method='GET', url=f'/v2/users/{current_owner_intra_id}/groups_users', headers={})
         if not success:
             return False, f"Error checking current group owner: {msg}", {}
-        has_group = any(gu['group_id'] == group_id for gu in data)
+
+        has_group = any((_gu_group_id(gu) == group_id) for gu in data if isinstance(gu, dict))
 
         # If user still has the group, remove it
         if has_group:
             # Remove the group from the current owner
-            gu_id = next(gu['id'] for gu in data if gu['group_id'] == group_id)
+            # Find the groups_users id corresponding to this group
+            try:
+                gu_id = next(gu.get('id') for gu in data if isinstance(gu, dict) and _gu_group_id(gu) == group_id)
+            except StopIteration:
+                return False, "Could not locate groups_users id for current owner", {}
             success, msg, data = api_intra.request(method='DELETE', url=f'/v2/groups_users/{gu_id}', headers={})
             if not success:
                 return False, f"Error removing group from current owner: {msg}", data
@@ -154,7 +182,7 @@ def cancel_unique_group(api_intra: object, user: object, args: dict):
         return False, f"Error checking user's groups: {msg}", {}
         
     # Check if user has this specific group_users record
-    has_group = any(gu['id'] == group_users_id and gu.get('group', {}).get('id') == group_id for gu in data)
+    has_group = any(gu['id'] == group_users_id and _gu_group_id(gu) == group_id for gu in data if isinstance(gu, dict))
     if not has_group:
         return True, f"User does not have the group_users record {group_users_id}", {}
 

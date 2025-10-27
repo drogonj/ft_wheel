@@ -83,6 +83,8 @@ Administrators can manage wheel configurations through the dedicated administrat
 - **Delete:** Remove wheels from the system
 - **Synchronization:** Changes automatically propagate to connected clients
 
+**Warning: Deleting a wheel will also remove all associated tickets.**
+
 ![Wheel Administration Interface](./assets/wheel_admin.png)
 
 ### Reward Functions
@@ -195,7 +197,6 @@ Administrative control over user accounts and permissions:
    - Check disk space availability
 
 For advanced configuration topics and emergency procedures, refer to [ADVANCED_CONFIGURATION](./ADVANCED_CONFIGURATION.md).
-
 
 ## Next Steps
 
