@@ -1,3 +1,4 @@
+from random import random
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
@@ -7,7 +8,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.views.decorators.http import require_GET, require_POST
 from datetime import timedelta
-import random, logging, json, os, ast
+import secrets, logging, json, os, ast
 
 from .models import History
 from administration.models import SiteSettings
@@ -96,7 +97,7 @@ def spin_view(request):
         return JsonResponse({'error': 'outdated_wheel', 'expected_version': current_version if current_version else "unknown"}, status=409)
 
     # YES IT IS RANDOM
-    result = random.randint(0, len(sectors)-1)
+    result = secrets.randbelow(len(sectors))
     # # # # # # # # # # # # # # # # 
 
     # Consume ticket if needed, else set cooldown timestamp
