@@ -96,15 +96,24 @@ def coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, 
 
     # Get first coalition ID
     first_coalition = data[0]
-    coa_id = first_coalition.get('id')
+    coa_id = first_coalition.get('id', None)
 
     if not coa_id:
         return False, f"Coalition ID not found for user {user.login}.", data
+    
+    # Get first coalition_user_id from user_id
+    success, msg, data  = api_intra.request(method='GET', url=f'/v2/users/{user.intra_id}/coalitions_users', headers={})
+    if not success or data[0].get('coalition_id', None) != coa_id:
+        data['warning'] = f"Coalition user ID not found for user {user.login}/coalition {coa_id}."
+        coa_user_id = None
+    else:
+        coa_user_id = data[0].get('id', None)
 
     # Sending points change request
     payload = {
         "score[value]": amount,
-        "score[reason]": reason
+        "score[reason]": reason,
+        "score[coalitions_user_id]": coa_user_id
     }
     success, msg, n_data = api_intra.request(method='POST', url=f'/v2/coalitions/{coa_id}/scores', headers={}, data=payload)
     return success, msg, n_data
