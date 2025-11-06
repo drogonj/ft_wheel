@@ -37,6 +37,8 @@ OAUTH_SECRET=your_oauth_secret
 OAUTH_REDIRECT_URI=your_oauth_redirect_uri
 ```
 
+**Note:** The `OAUTH_REDIRECT_URI` endpoint should be `/login/oauth/callback`.
+
 **Important:** Your 42 API credentials must have appropriate permissions. For example, wallet jackpots require `Transaction Manager` rights. Refer to [REWARDS_OPTIONS](./REWARDS_OPTIONS.md) for detailed permission requirements.
 
 #### Security Settings

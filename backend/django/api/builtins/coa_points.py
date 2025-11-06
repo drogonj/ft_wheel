@@ -55,6 +55,92 @@
 # This is completely stup*d btw...
 
 
+def _sort_cursus_priority(cursus_users: dict) -> int:
+    """Sort cursus_users by priority:
+        1. Active cursus before ended cursus
+        2. Main cursus before secondary cursus
+    """
+    if not isinstance(cursus_users, list):
+        return []
+    sorted_cursus = sorted(
+        cursus_users,
+        key=lambda cu: (
+            cu.get('end_at') is not None,
+            cu.get('cursus', {}).get('kind') != 'main'
+        )
+    )
+    return sorted_cursus
+
+
+def _get_primary_coalition(user_coalitions: list, blocs_data: list, user_data: dict) -> tuple[bool, str, dict]:
+    cursus_list = _sort_cursus_priority(user_data.get('cursus_users', []))
+    # For each cursus, check if there's a coalition in the blocs for that cursus
+    for cursus in cursus_list:
+        cursus_id = cursus.get('cursus', {}).get('id', None)
+        if not cursus_id:
+            continue
+        for bloc in blocs_data:
+            if str(bloc.get('cursus_id')) != str(cursus_id):
+                continue
+            # Get coalitions ids
+            ids = [c.get('id', None) for c in bloc.get('coalitions', [])]
+            # Found matching bloc, now find coalition in user's coalitions
+            for coalition in user_coalitions:
+                if coalition.get('id', None) in ids:
+                    return True, "Primary coalition found.", coalition
+    return False, "No coalition found for any of the user's cursus (active or inactive).", {}
+
+
+def _get_user_primary_campus(user_data: dict) -> tuple[bool, str, dict]:
+    """Fetch the primary campus of a user."""
+    if not user_data.get('campus_users', None) or not isinstance(user_data['campus_users'], list):
+        return False, "Campus users data not found/corrupted.", user_data
+    primary_campus = None
+    for campus in user_data['campus_users']:
+        if campus.get('is_primary', False):
+            primary_campus = campus
+            break
+    if not primary_campus:
+        return False, "Primary campus not found.", {}
+    return True, "Primary campus found.", primary_campus
+
+
+def _get_coalition(api_intra: object, user: object) -> tuple[bool, str, dict]:
+    """Fetch all required data then call _get_primary_coalition to get user's primary coalition."""
+    # Getting user data
+    success, msg, udata = api_intra.request('GET', f'/v2/users/{user.intra_id}')
+    if not success:
+        return False, f"Failed to fetch user data for {user.login}: {msg}", udata
+    if not udata or not isinstance(udata, dict):
+        return False, f"User data not found/corrupted for {user.login}.", udata
+    
+    # Extracting user's primary campus
+    success, msg, primary_campus = _get_user_primary_campus(udata)
+    campus_id = primary_campus.get('campus_id', None)
+    if not campus_id:
+        return False, f"Primary campus ID not found for {user.login}.", udata
+
+    # Get user's coalitions
+    success, msg, user_coalitions = api_intra.request('GET', f'/v2/users/{user.intra_id}/coalitions')
+    if not success:
+        return False, f"Failed to fetch coalitions data for {user.login}: {msg}", user_coalitions
+    if not user_coalitions or not isinstance(user_coalitions, list) or len(user_coalitions) == 0:
+        return False, f"Coalitions data not found/corrupted for {user.login}.", user_coalitions
+
+    # Get v2/bloc with campus_id
+    success, msg, blocs_data = api_intra.request('GET', f'/v2/blocs?filter[campus_id]={campus_id}')
+    if not success:
+        return False, f"Failed to fetch blocs data for {user.login}: {msg}", blocs_data
+    if not blocs_data or not isinstance(blocs_data, list) or len(blocs_data) == 0:
+        return False, f"Blocs data not found/corrupted for {user.login}.", blocs_data
+    
+    # Get Primary coalition from fetched data
+    success, msg, data = _get_primary_coalition(user_coalitions, blocs_data, udata)
+    if not success:
+        return False, msg, data
+    return True, "Primary coalition found.", data
+
+
 def coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, dict]:
     """Add or remove points from a coalition.
     Args:   
@@ -85,26 +171,20 @@ def coa_points(api_intra: object, user: object, args: dict) -> tuple[bool, str, 
 
     # Search for template args in reason
     reason = reason.replace('{login}', user.login)
-    # Fetch user coalitions
-    success, msg, data = api_intra.request('GET', f'/v2/users/{user.intra_id}/coalitions')
 
-    # Handle errors
+    # Get user's primary coalition
+    success, msg, data = _get_coalition(api_intra, user)
     if not success:
-        return False, f"Failed to fetch coalition data for {user.login}: {msg}", data
-    if not data or len(data) == 0:
-        return False, f"User {user.login} has no coalition data.", data
-
-    # Get first coalition ID
-    first_coalition = data[0]
-    coa_id = first_coalition.get('id', None)
-
+        return False, msg, data
+    
+    coa_id = data.get('id', None)
     if not coa_id:
         return False, f"Coalition ID not found for user {user.login}.", data
     
-    # Get first coalition_user_id from user_id
+    # Get coalition_user_id from user_id
     success, msg, data  = api_intra.request(method='GET', url=f'/v2/users/{user.intra_id}/coalitions_users', headers={})
-    if not success or data[0].get('coalition_id', None) != coa_id:
-        data['warning'] = f"Coalition user ID not found for user {user.login}/coalition {coa_id}."
+    if not success or not isinstance(data, list) or not data or data[0].get('coalition_id', None) != coa_id:
+        # coa points will be given but not linked to a specific coalition user
         coa_user_id = None
     else:
         coa_user_id = data[0].get('id', None)
