@@ -1,4 +1,8 @@
-### Currently in testing phase.
+# ⚠️ In development for christmas event, this is not intended to be a deployable version of the project.
+
+# Deployed for 42Mulhouse campus.
+
+## Refer to the MAIN branch for the stable release.
 
 # 🎡 FT_WHEEL
 
