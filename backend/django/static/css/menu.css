@@ -20,7 +20,7 @@
     position: absolute;
     top: 5%;
     left: 3%;
-    z-index: 998;
+    z-index: 997;
     cursor: pointer;
     background: linear-gradient(145deg, #4776E6, #8E54E9);
     width: max(2.5vw, 3.75vh);
