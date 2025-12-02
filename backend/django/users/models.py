@@ -1,5 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.apps import apps
 from datetime import timedelta
@@ -137,11 +137,14 @@ class Account(AbstractBaseUser):
         if not wheel_slug:
             return False
         Ticket = apps.get_model('wheel', 'Ticket')
-        ticket = Ticket.objects.filter(user=self, wheel_slug=wheel_slug, used_at__isnull=True).order_by('created_at').first()
-        if not ticket:
-            return False
-        ticket.mark_used()
-        return True
+        with transaction.atomic():
+            ticket = Ticket.objects.select_for_update().filter(
+                user=self, wheel_slug=wheel_slug, used_at__isnull=True
+            ).order_by('created_at').first()
+            if not ticket:
+                return False
+            ticket.mark_used()
+            return True
 
     def tickets_count(self, wheel_slug: str) -> int:
         if not wheel_slug:

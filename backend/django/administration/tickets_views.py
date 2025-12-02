@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.db import transaction
 
 from .admin_logging import logger as admin_logger
 from wheel.models import Ticket
@@ -15,6 +16,7 @@ User = get_user_model()
 
 @login_required
 @require_POST
+@transaction.atomic
 def grant_ticket_api(request):
     if not request.user.has_perm('grant_ticket_api'):
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)

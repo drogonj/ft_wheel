@@ -7,8 +7,11 @@ from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbid
 from django.utils import timezone
 from django.conf import settings
 from django.views.decorators.http import require_GET, require_POST
+from django.db import transaction
 from datetime import timedelta
 import secrets, logging, json, os, ast
+
+from users.models import Account
 
 from .models import History
 from administration.models import SiteSettings
@@ -79,8 +82,6 @@ def spin_view(request):
     sectors = cfg.get('sectors', [])
     ticket_only = bool(cfg.get('ticket_only', False))
 
-    if not request.user.can_spin_wheel(config_type, ticket_only):
-        return HttpResponseForbidden()
     # If config not in sectors, reject like outdated version (this error should happen only if a wheel was deleted/renamed or a user beeing naughty)
     if not sectors:
         return JsonResponse({'error': 'outdated_wheel', 'expected_version': "unknown"}, status=409)
@@ -96,51 +97,59 @@ def spin_view(request):
     if current_version and client_version != current_version:
         return JsonResponse({'error': 'outdated_wheel', 'expected_version': current_version if current_version else "unknown"}, status=409)
 
-    # YES IT IS RANDOM
-    result = secrets.randbelow(len(sectors))
-    # # # # # # # # # # # # # # # # 
-
-    # Consume ticket if needed, else set cooldown timestamp
-    # In test_mode, bypass both ticket consumption and cooldown updates
-    if ticket_only:
-        if not request.user.test_mode:
-            # If we fail to consume, block (race) — re-check server-side
-            consumed = request.user.consume_ticket(config_type)
-            if not consumed:
-                return JsonResponse({'error': 'no_ticket_available'}, status=403)
-    else:
-        if not request.user.test_mode:
-            request.user.last_spin = timezone.now()
-            request.user.save(update_fields=["last_spin"])
-    try:
-        success, message, data = handle_jackpots(request.user, sectors[result])
-            
-        details=sectors[result]['label']
-
-        if type(data) is ValueError:
-            data = data.args[0]
-        elif type(data) is str:
-            data = ast.literal_eval(data)
-        elif type(data) is not dict:
-            raise ValueError("Unexpected data type from jackpot handler: %s" % type(data))
-
-        History.objects.create(
-            wheel=config_type,
-            details=details,
-            color=sectors[result]['color'],
-            function_name=sectors[result]['function'],
-            r_message=message,
-            r_data=data,
-            success=success,
-            user=request.user
+    with transaction.atomic():
+        # Consume ticket if needed, else set cooldown timestamp
+        # In test_mode, bypass both ticket consumption and cooldown updates
+        user = (
+            Account.objects.select_for_update().get(pk=request.user.pk)
         )
-        if not success:
-            return JsonResponse({'error': 'server_error', 'message': 'An error occurred while processing your spin. Please contact an admin.'}, status=500)
-    except Exception as e:
-        logger.error("Unexpected error while saving history or handling jackpots: %s", e)
-        return JsonResponse({'error': 'server_error', 'message': 'An error occurred while processing your spin. Please contact an admin.'}, status=500)
+
+        if not user.can_spin_wheel(config_type, ticket_only):
+            return HttpResponseForbidden()
         
-    logger.info(f"Jackpots! {request.user.login} - {config_type} - {sectors[result]}")
+        if not user.test_mode:
+            if ticket_only:
+                if not user.consume_ticket(config_type):
+                    return JsonResponse({'error': 'no_ticket_available'}, status=403)
+            else:
+                user.last_spin = timezone.now()
+                user.save(update_fields=["last_spin"])
+
+        # YES IT IS RANDOM
+        result = secrets.randbelow(len(sectors))
+        # # # # # # # # # # # # # # # # 
+
+        try:
+            success, message, data = handle_jackpots(user, sectors[result])
+                
+            details=sectors[result]['label']
+
+            if type(data) is ValueError:
+                data = data.args[0]
+            elif type(data) is str:
+                data = ast.literal_eval(data)
+            elif type(data) is not dict:
+                raise ValueError("Unexpected data type from jackpot handler: %s" % type(data))
+
+            History.objects.create(
+                wheel=config_type,
+                details=details,
+                color=sectors[result]['color'],
+                function_name=sectors[result]['function'],
+                r_message=message,
+                r_data=data,
+                success=success,
+                user=user
+            )
+            if not success:
+                # Transaction will rollback, undoing ticket/cooldown consumption
+                return JsonResponse({'error': 'server_error', 'message': 'An error occurred while processing your spin. Please contact an admin.'}, status=500)
+        except Exception as e:
+            # Transaction will rollback, undoing ticket/cooldown consumption
+            logger.error("Unexpected error while saving history or handling jackpots: %s", e)
+            return JsonResponse({'error': 'server_error', 'message': 'An error occurred while processing your spin. Please contact an admin.'}, status=500)
+        
+    logger.info(f"Jackpots! {user.login} - {config_type} - {sectors[result]}")
 
     sector = sectors[result]
     # Send only "label", "color" and "message" to client

@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 import logging, requests, json
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from ft_wheel.utils import docker_secret
 from .models import OauthStateManager, OauthState
 
@@ -20,7 +20,6 @@ oauth_secrets = {
 
 
 logger = logging.getLogger('backend')
-
 
 
 @require_http_methods(["GET"])
@@ -139,8 +138,10 @@ def consent_view(request):
 @require_http_methods(["POST"])
 def accept_consent_view(request):
 	if request.user:
-		request.user.has_consent = True
-		request.user.save(update_fields=['has_consent'])
+		with transaction.atomic():
+			user = User.objects.select_for_update().get(pk=request.user.pk)
+			user.has_consent = True
+			user.save(update_fields=['has_consent'])
 		return redirect(f"{settings.WEBSITE_URL}/")
 	else:
 		return HttpResponseBadRequest()

@@ -9,6 +9,7 @@ from django.db.models import Q
 from wheel.models import History, HistoryMark
 from api.jackpots_handler import cancel_jackpot
 from .admin_logging import logger as admin_logger
+from django.db import transaction
 import json
 
 
@@ -141,9 +142,18 @@ def cancel_history_entry(request, history_id):
         data = json.loads(request.body)
         reason = data.get('reason', '').strip()[:200]
         
-        success, message, cancel_data = cancel_jackpot(request.user, history.function_name, history.r_data)
-        
-        if success:
+        with transaction.atomic():
+            # Re-fetch history with lock to prevent concurrent cancellations
+            history = History.objects.select_for_update().get(id=history_id)
+            
+            if history.is_cancelled:
+                return JsonResponse({'error': 'History entry is already cancelled'}, status=400)
+            
+            success, message, cancel_data = cancel_jackpot(request.user, history.function_name, history.r_data)
+            
+            if not success:
+                return JsonResponse({'error': f'Cancellation failed: {message} {cancel_data}'}, status=400)
+            
             # Mark as cancelled
             history.is_cancelled = True
             history.cancelled_at = timezone.now()
@@ -158,9 +168,6 @@ def cancel_history_entry(request, history_id):
                 'message': f'History entry cancelled successfully: {message}',
                 'cancel_data': cancel_data
             })
-        else:
-            admin_logger.error(f"history_cancel failed by={request.user.login} history_id={history_id} function={history.function_name} msg={message} data={cancel_data}")
-            return JsonResponse({'error': f'Cancellation failed: {message} {cancel_data}'}, status=400)
             
     except Exception as e:
         admin_logger.error(f"history_cancel error by={request.user.login} history_id={history_id} err={e}")

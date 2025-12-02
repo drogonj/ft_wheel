@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods, require_POST, require_GET
 from django.utils import timezone
 from django.db.models import Count, Q
+from django.db import transaction
 from datetime import datetime, timedelta
 import json
 from .admin_logging import logger as admin_logger
@@ -102,10 +103,11 @@ def toggle_maintenance_api(request):
         if not message:
             message = "The site is currently under maintenance. Please check back later."
         
-        settings, created = SiteSettings.objects.get_or_create(pk=1)
-        settings.maintenance_mode = enabled
-        settings.maintenance_message = message
-        settings.save()
+        with transaction.atomic():
+            settings, created = SiteSettings.objects.select_for_update().get_or_create(pk=1)
+            settings.maintenance_mode = enabled
+            settings.maintenance_message = message
+            settings.save()
         # business log
         admin_logger.info(f"maintenance_toggle by={request.user.login} enabled={enabled}")
         
@@ -129,7 +131,7 @@ def update_jackpot_cooldown_api(request):
     """Update jackpot cooldown setting"""
     if not request.user.has_perm('modify_site_settings'):
         return JsonResponse({'success': False, 'error': 'Permission denied'}, status=403)
-    
+        
     try:
         data = json.loads(request.body)
         hours = int(data.get('hours', 24))
@@ -137,9 +139,10 @@ def update_jackpot_cooldown_api(request):
         if hours < 1 or hours > 168:  # Between 1 hour and 1 week
             return JsonResponse({'success': False, 'error': 'Hours must be between 1 and 168'}, status=400)
         
-        settings, created = SiteSettings.objects.get_or_create(pk=1)
-        settings.jackpot_cooldown = hours * 3600  # Convert to seconds
-        settings.save()
+        with transaction.atomic():
+            settings, created = SiteSettings.objects.select_for_update().get_or_create(pk=1)
+            settings.jackpot_cooldown = hours * 3600  # Convert to seconds
+            settings.save()
         # business log
         admin_logger.info(f"jackpot_cooldown_update by={request.user.login} hours={hours}")
         
@@ -196,9 +199,10 @@ def update_announcement_api(request):
         if len(message) > 255:
             return JsonResponse({'success': False, 'error': 'Message too long (max 255)'}, status=400)
 
-        site_settings, _ = SiteSettings.objects.get_or_create(pk=1)
-        site_settings.announcement_message = message or "Welcome on ft_wheel, have fun !"
-        site_settings.save(update_fields=['announcement_message'])
+        with transaction.atomic():
+            site_settings, _ = SiteSettings.objects.select_for_update().get_or_create(pk=1)
+            site_settings.announcement_message = message or "Welcome on ft_wheel, have fun !"
+            site_settings.save(update_fields=['announcement_message'])
         admin_logger.info(f"announcement_update by={request.user.login} message_len={len(site_settings.announcement_message)}")
 
         return JsonResponse({'success': True, 'message': 'Announcement updated successfully'})
