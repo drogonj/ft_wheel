@@ -213,3 +213,7 @@ HTTPS = os.environ.get('HTTPS', 'False') == 'True'
 WEBSITE_URL = f"{"https" if HTTPS else "http"}://{os.environ.get('HOSTNAME')}"
 
 ASK_CONSENT = os.environ.get('ASK_CONSENT', 'False') == 'True'
+
+# Simulation mode: spins are not applied to the 42 Intra API and are marked as
+# success directly (see api/jackpots_handler.py::handle_jackpots).
+SIMULATION = os.environ.get('SIMULATION', 'False') == 'True'

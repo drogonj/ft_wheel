@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.views.decorators.http import require_GET, require_POST
 from django.db import transaction
+from django.db.models import Count
 from datetime import timedelta
 import secrets, logging, json, os, ast
 
@@ -190,6 +191,46 @@ def history_view(request):
     my_history = History.objects.filter(user=request.user).only('id', 'timestamp', 'wheel', 'details', 'color').order_by('-timestamp')[:100]
 
     return render(request, 'wheel/history.html', {'all_history': all_history, 'my_history': my_history})
+
+
+@login_required
+@require_http_methods(["GET"])
+def stats_view(request):
+    # Aggregate global statistics from the History audit log.
+    # Cancelled entries are kept in "spins" (the spin happened) but excluded
+    # from the reward distribution (the reward was reverted by an admin).
+    qs = History.objects.all()
+
+    total_spins = qs.count()
+    unique_players = qs.values('user').distinct().count()
+    spins_last_7d = qs.filter(timestamp__gte=timezone.now() - timedelta(days=7)).count()
+
+    leaderboard = list(
+        qs.values('user__login')
+          .annotate(spins=Count('id'))
+          .order_by('-spins', 'user__login')[:10]
+    )
+    for rank, row in enumerate(leaderboard, start=1):
+        row['rank'] = rank
+
+    reward_distribution = list(
+        qs.filter(is_cancelled=False)
+          .exclude(details__isnull=True)
+          .values('details', 'color')
+          .annotate(count=Count('id'))
+          .order_by('-count')[:8]
+    )
+    max_reward = reward_distribution[0]['count'] if reward_distribution else 0
+    for row in reward_distribution:
+        row['pct'] = round(row['count'] * 100 / max_reward) if max_reward else 0
+
+    return render(request, 'wheel/stats.html', {
+        'total_spins': total_spins,
+        'unique_players': unique_players,
+        'spins_last_7d': spins_last_7d,
+        'leaderboard': leaderboard,
+        'reward_distribution': reward_distribution,
+    })
 
 
 @login_required

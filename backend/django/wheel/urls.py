@@ -9,6 +9,7 @@ urlpatterns = [
     path('time_to_spin/', views.time_to_spin_view, name='time_to_spin'),
     path('change_wheel_config/', views.change_wheel_config, name='change_wheel_config'),
     path('history/', views.history_view, name='history'),
+    path('stats/', views.stats_view, name='stats'),
     path('faq/', views.faq_view, name='faq'),
     path('api/patch-notes/', views.patch_notes_api, name='patch_notes_api'),
     path('api/current-wheel-config/', views.current_wheel_config_api, name='current_wheel_config_api'),

@@ -296,6 +296,19 @@ The ticket system provides fine-grained access control:
 - **Ticket-Only Wheels**: Wheels requiring valid tickets for access
 - **Ticket Management**: View, filter, and delete tickets through the Control Panel
 
+### Simulation Mode
+
+Simulation mode is a global, deployment-wide toggle controlled by the `SIMULATION` variable in the `.env` file (`True`/`False`, defaults to `False`). It is read once at process startup, so changing it requires a restart (`make down up`).
+
+When `SIMULATION=True`:
+
+- Spins **never** call the reward function and therefore produce **no 42 Intra API side effects** (no coalition points, wallets, TIGs, etc.).
+- Each spin is recorded in the history as a success, with its `r_data` flagged `{"simulation": true, ...}`.
+- Cancelling a simulated history entry is a no-op (there is nothing to revert on the Intra side); the flag in `r_data` makes this safe even after `SIMULATION` is turned back off.
+- Config validation still applies: a sector pointing to a missing/invalid function still fails, so misconfigured wheels are caught while testing.
+
+This differs from **Test Mode** (per-user, see [Creating Superusers](#creating-superusers)): test mode bypasses spin cooldowns and ticket consumption for one account, while simulation mode neutralizes the Intra API side effects for the whole deployment. The two are independent and can be combined.
+
 ### Logging and Monitoring
 
 The system maintains comprehensive logs:
@@ -313,7 +326,7 @@ Logs are stored in the `saved-logs` Docker volume and accessible through the con
 
 - Role-based permissions prevent privilege escalation
 - CSRF protection on all administrative endpoints
-- OAuth state validation for authentication flows
+- OAuth state validation for authentication flows: the `state` returned by the provider is strictly compared (constant-time) against the one stored server-side, and the single-use state is discarded on mismatch
 - Session management with secure cookies
 
 ### Data Protection

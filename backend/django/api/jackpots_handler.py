@@ -1,6 +1,8 @@
 import importlib, logging, queue, os
 from logging.handlers import QueueHandler, QueueListener, RotatingFileHandler
 
+from django.conf import settings
+
 from api.intra import intra_api
 from .jackpot_logging import logger
 
@@ -82,6 +84,13 @@ def handle_jackpots(user, jackpot) -> tuple[bool, str, dict]:
         logger.info(error_msg)
         return False, error_msg, {}
 
+    # Simulation mode: skip the reward function (no 42 Intra API call / side
+    # effects) and mark the spin as a success directly.
+    if getattr(settings, 'SIMULATION', False):
+        msg = f"[SIMULATION] '{jackpot['function']}' not applied for {user.login} on '{jackpot.get('label', 'unknown')}'."
+        logger.info(msg)
+        return True, msg, {"simulation": True, "function": jackpot['function'], "args": jackpot.get('args', {})}
+
     try:
         func, cancel_func = _parse_function(jackpot['function'])
         success, msg, data = func(intra_api, user, jackpot.get('args', {}))
@@ -120,6 +129,13 @@ def cancel_jackpot(user: object, function_name: str, r_data: dict) -> tuple[bool
         error_msg = f"Data is not a dictionary: {r_data}"
         logger.error(error_msg)
         return False, error_msg, {}
+
+    # Entry was produced in simulation mode: nothing was applied to the Intra
+    # API, so there is nothing to cancel.
+    if r_data.get('simulation'):
+        msg = f"[SIMULATION] Cancellation skipped for {user.login} ({function_name}); spin was simulated."
+        logger.info(msg)
+        return True, msg, {"simulation": True}
 
     try:
         func, cancel_func = _parse_function(function_name)

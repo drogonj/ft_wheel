@@ -173,7 +173,7 @@
     background: linear-gradient(90deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
     border-top: 1px dotted #ffd700;
     border-bottom: 1px dotted #ffd700;
-    z-index: 998;
+    z-index: 997;
     overflow: hidden;
     display: flex;
     align-items: center;

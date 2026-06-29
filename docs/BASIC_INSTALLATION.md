@@ -58,6 +58,7 @@ POSTGRES_PASSWORD=TX8G0qx11fW3aCSugpLqRQ==
 - **HTTPS** (True/False): Set to `True` if using a reverse proxy with SSL termination. The application itself does not handle HTTPS directly.
 - **DEBUG** (True/False): Set to `False` for production environments. Use `True` only during development when frontend log access is needed.
 - **ASK_CONSENT** (True/False): When set to `True`, new users will see a consent page on first login, warning about potential consequences such as TIG assignments.
+- **SIMULATION** (True/False): When set to `True`, spins are **not** applied to the 42 Intra API and are marked as success directly. Use it to test the application without real-world consequences. Defaults to `False`. See [Advanced Configuration](./ADVANCED_CONFIGURATION.md#simulation-mode) for details.
 
 ## Deployment
 

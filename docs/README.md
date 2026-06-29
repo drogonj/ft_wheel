@@ -1,4 +1,3 @@
-### Currently in testing phase.
 
 # 🎡 FT_WHEEL
 
@@ -23,6 +22,8 @@ Tested on 2 piscines (around 110 persons per piscine) at 42 Mulhouse. The wheel,
 * **Real-Time Administration** — Enable maintenance mode, edit announcement banner, edit spin cooldown, ...
 * **Automatic Reward Handling** — Prizes can trigger built-in or custom reward actions (coalition points, wallets, etc.) and support logical rollbacks.
 * **Detailed History & Auditing** — View spin logs, cancel rewards, and track admin actions with automatic logging.
+* **Statistics & Leaderboard** — A public stats page (`/stats`) with a top-spinners leaderboard, reward distribution, and per-wheel spin counts.
+* **Simulation Mode** — Test the whole app without touching the 42 Intra API: spins are marked as success with no real-world side effects (`SIMULATION` flag).
 * **Modular Extensibility** — Easily add your own features via `api/builtins` or `api/mods`.
 * **Dockerized Infrastructure** — Production-ready setup with PostgreSQL, Daphne (ASGI), and persistent admin logs. All you have to do is to add a reverse-proxy for HTTPS.
 

@@ -13,6 +13,7 @@
         <link rel="stylesheet" href="{% static 'css/menu.css' %}" />
         <link rel="stylesheet" href="{% static 'css/logout.css' %}" />
         <link rel="stylesheet" href="{% static 'css/patch-notes.css' %}" />
+        <link rel="stylesheet" href="{% static 'css/summer_wheel.css' %}" />
         <title>ft_wheel</title>
 
         {{ jackpots|json_script:"current-wheel-sectors" }}
@@ -57,6 +58,24 @@
         </div>
         {% endif %}
 
+        <div class="summer-birds" aria-hidden="true">
+            <span class="bird bird-1"></span>
+            <span class="bird bird-2"></span>
+            <span class="bird bird-3"></span>
+            <span class="bird bird-4"></span>
+            <span class="bird bird-5"></span>
+            <span class="bird bird-6"></span>
+        </div>
+
+        <div class="summer-birds summer-birds-right" aria-hidden="true">
+            <span class="bird bird-1"></span>
+            <span class="bird bird-2"></span>
+            <span class="bird bird-3"></span>
+            <span class="bird bird-4"></span>
+            <span class="bird bird-5"></span>
+            <span class="bird bird-6"></span>
+        </div>
+
         <p id="counter"></p>
         <div id="spin_the_wheel">
             <canvas id="wheel" width="800" height="800"></canvas>
@@ -82,5 +101,6 @@
         <script type="module" src="{% static 'js/counter.js' %}"></script>
         <script type="module" src="{% static 'js/wheel.js' %}"></script>
         <script type="module" src="{% static 'js/patch-notes.js' %}"></script>
+        <script type="module" src="{% static 'js/summer.js' %}"></script>
     </body>
 </html>

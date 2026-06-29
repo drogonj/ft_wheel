@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadReque
 from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
-import logging, requests, json
+import logging, requests, json, secrets
 from django.db import IntegrityError, transaction
 from ft_wheel.utils import docker_secret
 from .models import OauthStateManager, OauthState
@@ -20,6 +20,7 @@ oauth_secrets = {
 
 
 logger = logging.getLogger('backend')
+
 
 
 @require_http_methods(["GET"])
@@ -53,14 +54,20 @@ def callback_view(request):
 	if not code:
 		return HttpResponseBadRequest('OAuth code\'s missing.')
 
-	try: 
+	try:
 		oauth_state = OauthStateManager.get_state(session_id=request.session.session_key)
 		if not oauth_state:
 			return redirect(f"{settings.WEBSITE_URL}/login?error=invalid_state")
 	except Exception as e:
 		logger.error(f"Error retrieving OAuth state: {e}")
 		return redirect(f"{settings.WEBSITE_URL}/login?error=invalid_state")
-	
+
+	# CSRF protection: the state returned by the provider must match the one we stored
+	returned_state = request.GET.get('state')
+	if not returned_state or not secrets.compare_digest(returned_state, oauth_state.state):
+		oauth_state.delete()
+		return redirect(f"{settings.WEBSITE_URL}/login?error=invalid_state")
+
 	data = {
 		'grant_type': 'authorization_code',
 		'client_id': oauth_secrets['oauth_uid'],

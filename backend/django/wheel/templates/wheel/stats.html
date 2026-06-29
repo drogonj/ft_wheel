@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- wheel.png Designed by Freepik -->
+    <link rel="shortcut icon" type="image/png" href="{% static 'images/wheel.png' %}">
+    <link rel="stylesheet" href="{% static 'css/global.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/stats.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/logout.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/menu.css' %}" />
+    <title>ft_wheel</title>
+</head>
+<body>
+
+    {% include 'wheel/menu.html' %}
+
+    <div class="stats-wrapper">
+        <h1 class="stats-title">Statistics 📊</h1>
+
+        <div class="stats-cards">
+            <div class="stat-card">
+                <span class="stat-value" data-count="{{ total_spins }}">0</span>
+                <span class="stat-label">Total spins</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" data-count="{{ unique_players }}">0</span>
+                <span class="stat-label">Players</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" data-count="{{ spins_last_7d }}">0</span>
+                <span class="stat-label">Spins (7 days)</span>
+            </div>
+        </div>
+
+        <div class="stats-columns">
+            <div class="stats-panel">
+                <h2 class="panel-title">🏆 Leaderboard</h2>
+                {% if leaderboard %}
+                    <div class="leaderboard">
+                        {% for row in leaderboard %}
+                            <div class="lb-row rank-{{ row.rank }}">
+                                <span class="lb-rank">
+                                    {% if row.rank == 1 %}🥇{% elif row.rank == 2 %}🥈{% elif row.rank == 3 %}🥉{% else %}#{{ row.rank }}{% endif %}
+                                </span>
+                                <a class="lb-user" href="https://profile.intra.42.fr/users/{{ row.user__login }}">{{ row.user__login }}</a>
+                                <span class="lb-spins">{{ row.spins }} spin{{ row.spins|pluralize }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="stats-empty">No spins yet.</p>
+                {% endif %}
+            </div>
+
+            <div class="stats-panel">
+                <h2 class="panel-title">🎁 Top rewards</h2>
+                {% if reward_distribution %}
+                    <div class="rewards">
+                        {% for row in reward_distribution %}
+                            <div class="reward-row">
+                                <div class="reward-head">
+                                    <span class="reward-label">{{ row.details|upper }}</span>
+                                    <span class="reward-count">{{ row.count }}</span>
+                                </div>
+                                <div class="reward-bar-track">
+                                    <div class="reward-bar" data-pct="{{ row.pct }}" style="background: {{ row.color }};"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="stats-empty">No rewards distributed yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Count-up animation for the summary cards
+        function animateCount(el) {
+            const target = parseInt(el.dataset.count, 10) || 0;
+            if (target === 0) { el.textContent = '0'; return; }
+            const duration = 900;
+            const start = performance.now();
+            function frame(now) {
+                const progress = Math.min((now - start) / duration, 1);
+                // easeOutQuad
+                const eased = 1 - (1 - progress) * (1 - progress);
+                el.textContent = Math.round(target * eased).toLocaleString();
+                if (progress < 1) requestAnimationFrame(frame);
+            }
+            requestAnimationFrame(frame);
+        }
+        document.querySelectorAll('.stat-value').forEach(animateCount);
+
+        // Grow the reward bars from 0 to their percentage on load
+        requestAnimationFrame(function () {
+            document.querySelectorAll('.reward-bar').forEach(function (bar) {
+                bar.style.width = (bar.dataset.pct || 0) + '%';
+            });
+        });
+    </script>
+</body>
+
+</html>

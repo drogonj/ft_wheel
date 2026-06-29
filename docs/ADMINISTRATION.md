@@ -22,6 +22,7 @@ The application uses a hierarchical role system with three access levels:
 | ------------------------------- | ------ | ----------- | ------- |
 | Spin wheels                   | Yes  | Yes       | Yes   |
 | View personal history         | Yes  | Yes       | Yes   |
+| View statistics & leaderboard | Yes  | Yes       | Yes   |
 | Access history administration | No   | Yes       | Yes   |
 | Access control panel          | No   | Yes       | Yes   |
 | Grant spin tickets            | No   | Yes       | Yes   |

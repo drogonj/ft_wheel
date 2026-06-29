@@ -12,6 +12,7 @@ services:
       - HOSTNAME=${HOSTNAME}
       - HTTPS=${HTTPS}
       - ASK_CONSENT=${ASK_CONSENT}
+      - SIMULATION=${SIMULATION}
     secrets:
       - django_secret
       - oauth_uid
