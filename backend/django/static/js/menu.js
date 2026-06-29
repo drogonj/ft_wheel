@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     menuItems.forEach(item => {
         item.addEventListener('click', async () => {
             const option = item.getAttribute('data-option');
-            if (option === 'history') {
+            if (option === 'history' || option === 'stats') {
                 return;
             }
             
@@ -87,8 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });function getCurrentMode() {
-    // /history route special case
+    // /history and /stats routes special cases
     if (window.location.pathname.includes('/history')) return 'history';
+    if (window.location.pathname.includes('/stats')) return 'stats';
 
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode') || urlParams.get('wheel');
